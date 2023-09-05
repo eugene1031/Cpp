@@ -64,6 +64,7 @@
         "iterator": "cpp",
         "memory_resource": "cpp",
         "utility": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "clang.cxxflags": "-std=c++17"
     }
 }
