@@ -1,1 +1,0 @@
-#Eb/No(dB) BitErrRate         BitErrSample  TotalSample 
