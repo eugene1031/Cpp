@@ -298,6 +298,7 @@ MatrixXcd generationTime12(int* x, MatrixXcd* I_s1s2) {  //轉至後位子會跑
 	//final_mat << time12, time34;
 	//final_mat << (1 / sqrt(2.0)) * time12, (1 / sqrt(2.0))* time34;
 	final_mat << (1 / sqrt(2.0)) * time12;
+
 	//cout << final_mat << endl << endl;
 	//cout << "func" << endl;
 	//cout << final_mat << endl<<endl;
@@ -415,13 +416,13 @@ void TxRx()
 
 
 
+			if(a < b){
+			fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), (((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3)), a, b);
+			}
 
-			fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), a, b);
 
 
-
-
-			/*
+			
 			if (((Dij_matrix.eigenvalues()).real())(0) == 0 && ((Dij_matrix.eigenvalues()).real())(1) == 0) {
 				//cout << "diversity 為2的情況下的dmin，";
 				dmin = pow((((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3)), 0.5);
@@ -446,7 +447,7 @@ void TxRx()
 				//puts(" ");
 				four++;
 			}
-			*/
+			
 			
 
 
@@ -456,11 +457,11 @@ void TxRx()
 
 		}//b for
 
-		/*cout << "dmin is 1 :" << temp_dmin[0] << endl;
+		cout << "dmin is 1 :" << temp_dmin[0] << endl;
 		cout << "dmin is 2 :" << temp_dmin[1] << endl;
 		cout << "dmin is 3 :" << temp_dmin[2] << endl;
 		cout << "dmin is 4 :" << temp_dmin[3] << endl<<endl;
-		*/
+		
 
 		statistics_dmin[a][0] = temp_dmin[0];
 		statistics_dmin[a][1] = temp_dmin[1];

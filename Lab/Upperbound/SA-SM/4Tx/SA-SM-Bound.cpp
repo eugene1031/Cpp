@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>
+#include <fstream>
 #include <complex> 
 #include <vector>
 #include <cstdlib>
@@ -52,7 +53,7 @@ static char fpDebugFilename[80] = OUTPUTFILED;
 static int	 v[2] = { -1, 1 };
 int	 point, biterrno, errlevel, u, t, de_info, dsignal, samp;
 long    pnstate, pntemp;
-double   snrdb, snr, deviate, dmin;
+double   snrdb, snr, deviate, dmin, dmin1;
 
 MatrixXcd X1(2, 2);
 MatrixXcd X2(2, 2);
@@ -62,6 +63,7 @@ MatrixXcd Xp2(2, 2);
 MatrixXcd Xp3(2, 2);
 
 complex<double> qpsk_map[4] = { complex<double>(1,0),complex<double>(0,1),complex<double>(0,-1),complex<double>(-1,0) };
+//complex<double> qpsk_map[4] = { complex<double>(0.7071,0.7071),complex<double>(-0.7071,0.7071),complex<double>(-0.7071,-0.7071),complex<double>(0.7071,-0.7071) };
 
 MatrixXcd I_s1s2(2, 2);
 MatrixXcd I_s3s4(2, 2);
@@ -85,11 +87,6 @@ VectorXcd SingularValues(M), eigenvalue(M);
 
 
 complex<double> s[2][M];
-
-MatrixXcd* I_s1s2_ptr = &I_s1s2;
-MatrixXcd* I_s3s4_ptr = &I_s3s4;
-MatrixXcd* Q_s1s2_ptr = &Q_s1s2;
-MatrixXcd* Q_s3s4_ptr = &Q_s3s4;
 MatrixXcd I_diag_new(M, M);
 
 int gt1 = 0;
@@ -98,32 +95,6 @@ int g1 = 0;
 int g2 = 0;
 
 int m = 0;
-
-int q11 = 0;
-int q12 = 0;
-int q13 = 0;
-int q14 = 0;
-int q21 = 0;
-int q22 = 0;
-int q23 = 0;
-int q24 = 0;
-
-int aaa = 0;
-int interleaved_pattern[4][4] = { 1,2,3,4,     //  1324 是不合法的
-									1,3,4,2,
-									1,4,2,3,
-									2,1,4,3,
-	//2,4,3,1,
-	//2,3,1,4
-};
-int antenna_perm[2][2] = { 1,2,
-							2,1 };
-//要用的天線
-
-int two_time_ant_per[4][1] = { 1,
-							2,
-							3,
-							4 };
 
 MatrixXcd H(N, M), H_test(N, M / 2), noise(N, M);
 
@@ -148,40 +119,15 @@ double min1 = 9999999.0;
 	fclose(fp);
 }*/
 
-MatrixXcd Gmatrix(int g)
-{
-	MatrixXcd G1(M, M);
-	G1 << 1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1;
-
-
-	MatrixXcd G2(M, M);
-	G2 << 1, 0, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1,
-		0, 1, 0, 0;
-
-
-
-	if (g == 0) {
-		return G1;
-	}
-	if (g == 1) {
-		return G2;
-	}
-
-}
 int find3And4Zero(int x, int y, double a, double b, double c, double d) {
 	int count = 0;
-	if (a == 0.0)
+	if (fabs(a) < 1e-6)
 		count = count + 1;
-	if (b == 0.0)
+	if (fabs(b) < 1e-6)
 		count = count + 1;
-	if (c == 0.0)
+	if (fabs(c) < 1e-6)
 		count = count + 1;
-	if (d == 0.0)
+	if (fabs(d) < 1e-6)
 		count = count + 1;
 	return count;
 }
@@ -209,20 +155,6 @@ void TxRx()
 	MatrixXcd zero(2, 2);
 	zero << 0, 0,
 		0, 0;
-
-	MatrixXcd I0(M, M);
-	I0 << 1, -1, 0, 0,
-		1, 1, 0, 0,
-		0, 0, 1, -1,
-		0, 0, 1, 1;
-	I0 = (1 / sqrt(2.0)) * I0;
-
-	MatrixXcd I1(M, M);
-	I1 << 1, -1, 0, 0,
-		1, 1, 0, 0,
-		0, 0, 1, -1,
-		0, 0, 1, 1;
-	I1 = (1 / sqrt(2.0)) * I1;
 
 	MatrixXcd Xt0(M, M);
 	MatrixXcd Xt1(M, M);
@@ -252,7 +184,7 @@ void TxRx()
             
             if(m_a == 0){
                 I_diag << I_s1s2, zero;
-                I_diag << (1 / sqrt(2.0)) * I_diag;
+                //I_diag << (1 / sqrt(2.0)) * I_diag;
             }
             else if (m_a == 1) {
 						I_diag <<
@@ -260,8 +192,7 @@ void TxRx()
 							0, conj(s[0][0]),
 							s[0][1], 0,
 							0, conj(s[0][1]);
-						I_diag << (1 / sqrt(2.0)) * I_diag;
-						//cout << "xr_2=" << H * xr << endl;
+						//I_diag << (1 / sqrt(2.0)) * I_diag;
 					}
 			else if (m_a == 2) {
 						I_diag <<
@@ -269,8 +200,7 @@ void TxRx()
 							0, conj(s[0][0]),
 							0, s[0][1],
 							-conj(s[0][1]), 0;
-						 I_diag << (1 / sqrt(2.0)) * I_diag;
-						//cout << "xr_2=" << H * xr << endl;
+						 //I_diag << (1 / sqrt(2.0)) * I_diag;
 					}
 			else if (m_a == 3) {
 						I_diag <<
@@ -278,15 +208,14 @@ void TxRx()
 							-conj(s[0][0]), 0,
 							s[0][1], 0,
 							0, conj(s[0][1]);
-						I_diag << (1 / sqrt(2.0)) * I_diag;
-						//cout << "xr_2=" << H * xr << endl;
+						//I_diag << (1 / sqrt(2.0)) * I_diag;
 					}
 
 			m_b = ((b / 32) % 2) * 2 + ((b / 16) % 2);
 
             if(m_b == 0){
                 Q_diag << Q_s1s2, zero;
-                Q_diag << (1 / sqrt(2.0)) * Q_diag;
+                //Q_diag << (1 / sqrt(2.0)) * Q_diag;
             }
             else if (m_b == 1) {
 						Q_diag <<
@@ -294,7 +223,7 @@ void TxRx()
 							0, conj(s[1][0]),
 							s[1][1], 0,
 							0, conj(s[1][1]);
-						Q_diag << (1 / sqrt(2.0)) * Q_diag;
+						//Q_diag << (1 / sqrt(2.0)) * Q_diag;
 						//cout << "xr_2=" << H * xr << endl;
 					}
 			else if (m_b == 2) {
@@ -303,7 +232,7 @@ void TxRx()
 							0, conj(s[1][0]),
 							0, s[1][1],
 							-conj(s[1][1]), 0;
-						 Q_diag << (1 / sqrt(2.0)) * Q_diag;
+						// Q_diag << (1 / sqrt(2.0)) * Q_diag;
 						//cout << "xr_2=" << H * xr << endl;
 					}
 			else if (m_b == 3) {
@@ -312,33 +241,48 @@ void TxRx()
 							-conj(s[1][0]), 0,
 							s[1][1], 0,
 							0, conj(s[1][1]);
-						Q_diag << (1 / sqrt(2.0)) * Q_diag;
+						//Q_diag << (1 / sqrt(2.0)) * Q_diag;
 						//cout << "xr_2=" << H * xr << endl;
 					}
+					// cout << "I:" << endl 
+					// 	 << I_diag << endl;
+					// cout << "Q:" << endl
+					// 	 << Q_diag << endl;
+					// break;
+					// 論文裡面的公式
+					r_matrix << (I_diag - Q_diag);
+					Dij_matrix << (r_matrix) * (r_matrix.adjoint());
+					//cout << Dij_matrix << endl;
+					/*
+					cout << "算出來的特徵值: ";
+					for (int k = 0; k < M; k++)
+						cout << " " << ((Dij_matrix.eigenvalues()).real())(k);;
+					puts("");
+					*/
 
-			//論文裡面的公式
-			r_matrix << (I_diag - Q_diag);
-			Dij_matrix << (r_matrix) * (r_matrix.adjoint());
-
-			
-			/*
-			cout << "算出來的特徵值: ";
-			for (int k = 0; k < M; k++)
-				cout << " " << ((Dij_matrix.eigenvalues()).real())(k);;
-			puts("");
-			*/
-
-			//Debug find zero numbers bigger than 3
-			if (find3And4Zero(a, b, ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3)) > 2)
-			{
-				fprintf(fpDebug, "%d    %.5f%10.5f%10.5f%10.5f  (%d,%d)\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), a, b);
+					// Debug find zero numbers bigger than 3
+					if (find3And4Zero(a, b, ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3)) > 2)
+					{
+						fprintf(fpDebug, "%d    %.5f%10.5f%10.5f%10.5f  (%d,%d)\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), a, b);
 			}
-
-			fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), a, b);
-
+			if(a < b){// && s[0][0] == s[1][0] && s[0][1] == s[1][1]){
+				// ofstream excel;
+				// excel.open("SA-SM-Bound.csv");
+				//if((((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3)) < 12){
+				fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10.5f\n", hammingDistance(a, b), abs(((Dij_matrix.eigenvalues()).real())(0)), abs(((Dij_matrix.eigenvalues()).real())(1)), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), (((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3)));//, a, b);
+				//}
+				// if(excel.is_open())
+				// {excel << ((Dij_matrix.eigenvalues()).real())(2) << ',' << ((Dij_matrix.eigenvalues()).real())(3)<< ',' << (((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3))<< ',' << a<< ',' << b<< ',';
+				// excel << endl;
+				}
+			}
 			/*
 			if (((Dij_matrix.eigenvalues()).real())(0) == 0 && ((Dij_matrix.eigenvalues()).real())(1) == 0) {
 				//cout << "diversity 為2的情況下的dmin，";
+				dmin1 = abs(((Dij_matrix.eigenvalues()))(2) * ((Dij_matrix.eigenvalues()))(3));
+				if(dmin1 < 1.0 && dmin1 != 1.0){
+					cout << "dmin1: " << dmin1 << endl;
+				}
 				dmin = pow((((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3)), 0.5);
 				//printf("%.17f\n", dmin);
 				if (dmin < 1) {
@@ -371,45 +315,45 @@ void TxRx()
 
 		}//b for
 
-		/*cout << "dmin is 1 :" << temp_dmin[0] << endl;
-		cout << "dmin is 2 :" << temp_dmin[1] << endl;
-		cout << "dmin is 3 :" << temp_dmin[2] << endl;
-		cout << "dmin is 4 :" << temp_dmin[3] << endl<<endl;
-		*/
+		// cout << "dmin is 1 :" << temp_dmin[0] << endl;
+		// cout << "dmin is 2 :" << temp_dmin[1] << endl;
+		// cout << "dmin is 3 :" << temp_dmin[2] << endl;
+		// cout << "dmin is 4 :" << temp_dmin[3] << endl<<endl;
+		
 
-		statistics_dmin[a][0] = temp_dmin[0];
-		statistics_dmin[a][1] = temp_dmin[1];
-		statistics_dmin[a][2] = temp_dmin[2];
-		statistics_dmin[a][3] = temp_dmin[3];
+		// statistics_dmin[a][0] = temp_dmin[0];
+		// statistics_dmin[a][1] = temp_dmin[1];
+		// statistics_dmin[a][2] = temp_dmin[2];
+		// statistics_dmin[a][3] = temp_dmin[3];
 
 
-		temp_dmin[0] = 0;
-		temp_dmin[1] = 0;
-		temp_dmin[2] = 0;
-		temp_dmin[3] = 0;
+		// temp_dmin[0] = 0;
+		// temp_dmin[1] = 0;
+		// temp_dmin[2] = 0;
+		// temp_dmin[3] = 0;
 		//printf("diversity is 4 : %d\n", four);
 		//printf("diversity is 2 : %d\n", two);
 	}
-	double dmin[M];
-	for (int jj = 0; jj < codeword - 1; jj++) {
+// 	double dmin[M];
+// 	for (int jj = 0; jj < codeword - 1; jj++) {
 
-		dmin[0] += statistics_dmin[jj][0];
-		dmin[1] += statistics_dmin[jj][1];
-		dmin[2] += statistics_dmin[jj][2];
-		dmin[3] += statistics_dmin[jj][3];
-		fclose(fp);
-	}
-	cout << "dmin is 1 : " << (dmin[0] * 2) / codeword << endl;
-	cout << "dmin is 2 : " << (dmin[1] * 2) / (codeword) << endl;
-	cout << "dmin is 3 : " << (dmin[2] * 2) / (codeword) << endl;
-	cout << "dmin is 4 : " << (dmin[3] * 2) / (codeword) << endl;
+// 		dmin[0] += statistics_dmin[jj][0];
+// 		dmin[1] += statistics_dmin[jj][1];
+// 		dmin[2] += statistics_dmin[jj][2];
+// 		dmin[3] += statistics_dmin[jj][3];
+// 		fclose(fp);
+// 	}
+// 	cout << "dmin is 1 : " << (dmin[0] * 2) / codeword << endl;
+// 	cout << "dmin is 2 : " << (dmin[1] * 2) / (codeword) << endl;
+// 	cout << "dmin is 3 : " << (dmin[2] * 2) / (codeword) << endl;
+// 	cout << "dmin is 4 : " << (dmin[3] * 2) / (codeword) << endl;
 
-	//cout << "dmin is 1 : " << (dmin[0] )  << endl;
-	//cout << "dmin is 2 : " << (dmin[1] )  << endl;
-	//cout << "dmin is 3 : " << (dmin[2] )  << endl;
-	//cout << "dmin is 4 : " << (dmin[3] )  << endl;
+// 	//cout << "dmin is 1 : " << (dmin[0] )  << endl;
+// 	//cout << "dmin is 2 : " << (dmin[1] )  << endl;
+// 	//cout << "dmin is 3 : " << (dmin[2] )  << endl;
+// 	//cout << "dmin is 4 : " << (dmin[3] )  << endl;
 
-}
+// }
 int main()
 {
 	TxRx();

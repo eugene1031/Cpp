@@ -1,4 +1,0 @@
-#Eb/No(dB) BitErrRate         BitErrSample  TotalSample ======== DATE:1130 (6T4R)
-#Eb/No(dB) BitErrRate         BitErrSample  TotalSample ======== DATE:1130 (6T4R)
-#Eb/No(dB) BitErrRate         BitErrSample  TotalSample ======== DATE:1130 (6T4R)
-#Eb/No(dB) BitErrRate         BitErrSample  TotalSample ======== DATE:1130 (6T4R)
