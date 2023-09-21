@@ -148,31 +148,6 @@ double min1 = 9999999.0;
 	fclose(fp);
 }*/
 
-MatrixXcd Gmatrix(int g)
-{
-	MatrixXcd G1(M, M);
-	G1 << 1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1;
-
-
-	MatrixXcd G2(M, M);
-	G2 << 1, 0, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1,
-		0, 1, 0, 0;
-
-
-
-	if (g == 0) {
-		return G1;
-	}
-	if (g == 1) {
-		return G2;
-	}
-
-}
 int find3And4Zero(int x, int y, double a, double b, double c, double d) {
 	int count = 0;
 	if (fabs(a) < 1e-6)
