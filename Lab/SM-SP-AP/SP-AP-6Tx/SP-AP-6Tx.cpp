@@ -149,7 +149,7 @@ int interleaved_pattern2[3][4] = {
 //==========================================================================================================================
 
 MatrixXcd H(N, T), H_test(N, 2), noise(N, T);
-MatrixXcd  Y1(N, 2), Y2(N, 2), Y3(N, 2), Y4(N, 2), y(N, T), NY(N, M);
+MatrixXcd  Y1(N, 2), Y2(N, 2), Y3(N, 2), Y4(N, 2), X1(M, 2), X2(M, 2), X3(M, 2), X4(M, 2), y(N, T), NY(N, M);
 MatrixXcd temp(N, 6), save(N, 6), Y1_temp(N, 2), Y2_temp(N, 2), Y3_temp(N, 2), Y4_temp(N, 2);
 void fading_channel(int row, int col) {
 	for (int a = 0; a < row; a++) {
@@ -191,25 +191,15 @@ MatrixXcd channel_estimation(MatrixXcd* H, int* reference_order) {
 
 
 void Y1Y2Y3(int c, int a) {
-    int col = c / 6 % 60;
-    int row = c / 6 / 60;
+
     if (a == 1)
     {
-        //new define
-        //NY.row(interleaved_pattern1[row][0] - 1) << y.row(0);
-		//NY.row(interleaved_pattern1[row][1] - 1) << y.row(1);
-		//NY.row(interleaved_pattern1[row][2] - 1) << y.row(2);
-		//NY.row(interleaved_pattern1[row][3] - 1) << y.row(3);
-		//NY.row(interleaved_pattern1[row][4] - 1) << y.row(4);
-		//NY.row(interleaved_pattern1[row][5] - 1) << y.row(5);
-
-
-		NY.col(interleaved_pattern1[col][0] - 1) << y.col(0);
-		NY.col(interleaved_pattern1[col][1] - 1) << y.col(1);
-		NY.col(interleaved_pattern1[col][2] - 1) << y.col(2);
-		NY.col(interleaved_pattern1[col][3] - 1) << y.col(3);
-		NY.col(interleaved_pattern1[col][4] - 1) << y.col(4);
-		NY.col(interleaved_pattern1[col][5] - 1) << y.col(5);
+		NY.col(interleaved_pattern1[c][0] - 1) << y.col(0);
+		NY.col(interleaved_pattern1[c][1] - 1) << y.col(1);
+		NY.col(interleaved_pattern1[c][2] - 1) << y.col(2);
+		NY.col(interleaved_pattern1[c][3] - 1) << y.col(3);
+		NY.col(interleaved_pattern1[c][4] - 1) << y.col(4);
+		NY.col(interleaved_pattern1[c][5] - 1) << y.col(5);
 
 
 		Y1.col(0) << NY.col(0);
@@ -219,27 +209,6 @@ void Y1Y2Y3(int c, int a) {
 		Y3.col(0) << NY.col(4);
 		Y3.col(1) << NY.col(5);
     }
-
-    else if (a == 2) {
-
-		Y1.col(0) << y.col(0);
-		Y1.col(1) << y.col(1);
-		Y2.col(0) << y.col(interleaved_pattern2[c][0] + 1);
-		Y2.col(1) << y.col(interleaved_pattern2[c][1] + 1);
-		Y3.col(0) << y.col(interleaved_pattern2[c][2] + 1);
-		Y3.col(1) << y.col(interleaved_pattern2[c][3] + 1);
-	}
-
-	else if (a == 3) {
-
-		Y1.col(0) << y.col(0);
-		Y1.col(1) << y.col(1);
-		Y2.col(0) << y.col(2);
-		Y2.col(1) << y.col(3);
-		Y3.col(0) << y.col(4);
-		Y3.col(1) << y.col(5);
-
-	}
 }
 
 MatrixXcd ret(int x) {
@@ -276,24 +245,47 @@ MatrixXcd generation(int* x, int* x1, int* x2, MatrixXcd* I_s1s2, MatrixXcd* I_s
 	return final_mat;
 }
 
+MatrixXcd de_generation(int* x, int* x1, int* x2, MatrixXcd* de_STBC, MatrixXcd* de_STBC1, MatrixXcd* de_STBC2) {  //轉至後位子會跑掉，所以先給一個假的
+
+	MatrixXcd time12(M, 2), time34(M, 2), time56(M, 2), time78(M, 2), final_mat(M, M);
+
+	(*de_STBC)(0, 1) = -conj((*de_STBC)(0, 1));
+	(*de_STBC)(1, 0) = -conj((*de_STBC)(1, 0));
+
+
+	time12 << ((*de_STBC) * ret(*x)).transpose();
+	time34 << ((*de_STBC) * ret(*x1)).transpose();
+	time56 << ((*de_STBC) * ret(*x2)).transpose();
+
+	//	cout << time12 << endl;
+	final_mat << time12, time34, time56;
+	return final_mat;
+}
+
 void receive()//void frame_length()
 {
 	//srand((unsigned)time(NULL));
-	int input_bits[frame_w][bits_num], decode_bits[frame_w][bits_num], ab_save[frame_w][M], ab_save_temp[frame_w][M], m_save[frame_w], c_save[frame_w], final_save[frame_w], interleaved, reference_order, m, r, g;
+	int input_bits[frame_w][bits_num], decode_bits[frame_w][bits_num], ab_save[frame_w][M], ab_save_temp[frame_w][M], m_save[frame_w], c_save[frame_w], final_save[frame_w], interleaved, ref, m, r, g;
 
 	double norm_output = 0, norm_output1 = 0, norm_output2 = 0, norm_output3 = 0, norm_output4 = 0, min = 9999999, temp_min1 = 9999999, temp_min2 = 9999999, temp_min3 = 9999999, temp_min4 = 9999999;
 
 	complex<double> qpsk_map[4] = { complex<double>(1,0),complex<double>(0,1),complex<double>(0,-1),complex<double>(-1,0) }, Q[frame_w][M];
 
-	MatrixXcd zero(2, 2), /*Y1(N, 2), Y2(N, 2),*/ I_s1s2(2, 2), I_s3s4(2, 2), I_s5s6(2, 2), I_s7s8(2, 2), I_diag(M, M), I_diag2(M, M), St1(M, M), /*y(N, M),*/ de_STBC(2, 2);
+	MatrixXcd zero(2, 2), /*Y1(N, 2), Y2(N, 2),*/ I_s1s2(2, 2), I_s3s4(2, 2), I_s5s6(2, 2), I_s7s8(2, 2), I_diag(M, M), de_diag(M, M), de_diag2(M, M), I_diag2(M, M), St1(M, M), /*y(N, M),*/ de_STBC(2, 2), de_STBC1(2, 2), de_STBC2(2, 2);
 
-	MatrixXcd st4(M, T), st2(M, T), temp(M, 6), save(M, 6);
+	MatrixXcd st4(M, T), st2(M, T), temp(M, 6), save(M, 6), I0(M, M);
+	I0.setIdentity(M, M);
 
 	MatrixXcd* I_s1s2_ptr = &I_s1s2;
 	MatrixXcd* I_s3s4_ptr = &I_s3s4;
 	MatrixXcd* I_s5s6_ptr = &I_s5s6;
 	MatrixXcd* I_s7s8_ptr = &I_s7s8;
 	MatrixXcd* H_ptr = &H;
+	MatrixXcd* de_STBC_ptr = &de_STBC;
+	MatrixXcd* de_STBC1_ptr = &de_STBC1;
+	MatrixXcd* de_STBC2_ptr = &de_STBC2;
+
+
 	zero << 0, 0,
 		0, 0;
 	//===========================encoder_start===============================
@@ -322,6 +314,7 @@ void receive()//void frame_length()
 		I_s3s4 << 1 / sqrt(2.0) * I_s3s4;
 		I_s5s6 << Q[i][4], -conj(Q[i][5]), Q[i][5], conj(Q[i][4]);
 		I_s5s6 << 1 / sqrt(2.0) * I_s5s6;
+
 
 		m = (input_bits[i][0])
 			+ ((input_bits[i][1]) << 1)
@@ -369,15 +362,41 @@ void receive()//void frame_length()
 			{
 				for (int b = 0; b < 4; b++)
 				{
+					for (int c = 0; c < 4; c++)
+				{
+					for (int d = 0; d < 4; d++)
+				{
+					for (int e = 0; e < 4; e++)
+				{
+					for (int f = 0; f < 4; f++)
+				{
 					de_STBC << qpsk_map[a], -conj(qpsk_map[b]), qpsk_map[b], conj(qpsk_map[a]);
 					de_STBC = 1 / sqrt(2.0) * de_STBC; //除以根號二
+					de_STBC1 << qpsk_map[c], -conj(qpsk_map[d]), qpsk_map[d], conj(qpsk_map[c]);
+					de_STBC1 = 1 / sqrt(2.0) * de_STBC1; //除以根號二
+					de_STBC2 << qpsk_map[e], -conj(qpsk_map[f]), qpsk_map[f], conj(qpsk_map[e]);
+					de_STBC2 = 1 / sqrt(2.0) * de_STBC2; //除以根號二
 					if (mr < 4096) {
-						interleaved = mr;
-						reference_order = mr % 6;
-						Y1Y2Y3(interleaved, 1);
-						norm_output1 = (Y1 - channel_estimation(H_ptr, &antenna_perm2[reference_order][0]) * de_STBC).norm();
-						norm_output2 = (Y2 - channel_estimation(H_ptr, &antenna_perm2[reference_order][1]) * de_STBC).norm();
-						norm_output3 = (Y3 - channel_estimation(H_ptr, &antenna_perm2[reference_order][2]) * de_STBC).norm();
+						interleaved = mr / 6 % 60;
+						ref = mr % 6;
+						Y1Y2Y3(interleaved, 1); //col反回來
+						de_diag << de_generation(&antenna_perm2[ref][0], &antenna_perm2[ref][1], &antenna_perm2[ref][2], de_STBC_ptr, de_STBC1_ptr, de_STBC2_ptr);
+						
+						for (int kk = 0; kk < 6; kk++)
+						{
+							de_diag2.row(kk) << de_diag.row(interleaved_pattern1[mr / 6 / 60][kk] - 1);
+						}
+
+						X1.col(0) << de_diag2.col(0);
+						X1.col(1) << de_diag2.col(1);
+						X2.col(0) << de_diag2.col(2);
+						X2.col(1) << de_diag2.col(3);
+						X3.col(0) << de_diag2.col(4);
+						X3.col(1) << de_diag2.col(5);
+						
+						norm_output1 = (Y1 - H * X1).norm();
+						norm_output2 = (Y2 - H * X2).norm();
+						norm_output3 = (Y3 - H * X3).norm();
 
 					}
 
@@ -388,17 +407,21 @@ void receive()//void frame_length()
 					}
 					if (norm_output2 < temp_min2) {
 						temp_min2 = norm_output2;
-						ab_save_temp[i][2] = a;
-						ab_save_temp[i][3] = b;
+						ab_save_temp[i][2] = c;
+						ab_save_temp[i][3] = d;
 					}
 					if (norm_output3 < temp_min3) {
 						temp_min3 = norm_output3;
-						ab_save_temp[i][4] = a;
-						ab_save_temp[i][5] = b;
+						ab_save_temp[i][4] = e;
+						ab_save_temp[i][5] = f;
 					}
 
 				}
 			}
+		}
+	}
+}
+}
 			norm_output = temp_min1 + temp_min2 + temp_min3;
 			//	cout << "mr = " << mr;
 			//	cout << "     norm_output = " << norm_output << endl; ;

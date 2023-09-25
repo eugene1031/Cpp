@@ -28,8 +28,8 @@
 #define frame_w 20 // 35
 #define sqrt2 0.70710678118654752440084436210485
 #define pi 3.14159265359
-#define bits_num 30       // 28
-#define antenna_number 14 // 0~13
+#define bits_num 39       // 28
+#define antenna_number 23 // 0~13
 
 using namespace std;
 using namespace Eigen;
@@ -103,104 +103,11 @@ void record()
 //==========================================================================
 // G5有24種天線排列
 
-int antenna_perm[24][4] = {
-    1,
-    2,
-    3,
-    4,
-    1,
-    2,
-    4,
-    3,
-    1,
-    3,
-    2,
-    4,
-    1,
-    3,
-    4,
-    2,
-    1,
-    4,
-    2,
-    3,
-    1,
-    4,
-    3,
-    2,
-    2,
-    1,
-    3,
-    4,
-    2,
-    1,
-    4,
-    3,
-    2,
-    3,
-    1,
-    4,
-    2,
-    3,
-    4,
-    1,
-    2,
-    4,
-    1,
-    3,
-    2,
-    4,
-    3,
-    1,
-    3,
-    1,
-    2,
-    4,
-    3,
-    1,
-    4,
-    2,
-    3,
-    2,
-    1,
-    4,
-    3,
-    2,
-    4,
-    1,
-    3,
-    4,
-    1,
-    2,
-    3,
-    4,
-    2,
-    1,
-    4,
-    1,
-    2,
-    3,
-    4,
-    1,
-    3,
-    2,
-    4,
-    2,
-    1,
-    3,
-    4,
-    2,
-    3,
-    1,
-    4,
-    3,
-    1,
-    2,
-    4,
-    3,
-    2,
-    1,
-};
+int antenna_perm[24][4] = { 1,2,3,4,	1,2,4,3,	1,3,2,4,	1,3,4,2,	1,4,2,3,	1,4,3,2,
+								2,1,3,4,	2,1,4,3,	2,3,1,4,	2,3,4,1,	2,4,1,3,	2,4,3,1,
+								3,1,2,4,	3,1,4,2,	3,2,1,4,	3,2,4,1,	3,4,1,2,	3,4,2,1,
+								4,1,2,3,	4,1,3,2,	4,2,1,3,	4,2,3,1,	4,3,1,2,	4,3,2,1, 
+                                };
 
 int antenna_perm24[24][4] = {1, 2, 3, 4, 1, 2, 4, 3, 1, 3, 2, 4, 1, 3, 4, 2, 1, 4, 2, 3, 1, 4, 3, 2,
                              2, 1, 3, 4, 2, 1, 4, 3, 2, 3, 1, 4, 2, 3, 4, 1, 2, 4, 1, 3, 2, 4, 3, 1,
@@ -646,7 +553,7 @@ void receive() // void frame_length()
 {
     // srand((unsigned)time(NULL));
 
-    int input_bits[frame_w][bits_num], decode_bits[frame_w][bits_num], ab_save[frame_w][M], ab_save_temp[frame_w][M], m_save[frame_w], c_save[frame_w], final_save[frame_w], interleaved, reference_order, m, r, g, sp, ant;
+    int input_bits[frame_w][bits_num], decode_bits[frame_w][bits_num], ab_save[frame_w][M], ab_save_temp[frame_w][M], m_save[frame_w], c_save[frame_w], final_save[frame_w], interleaved, reference_order, m, r, g, sp, ant, col, row;
     double norm_save[16384] = {0};
     int debug_savem[16384] = {0};
     double norm_output = 0, norm_output1 = 0, norm_output2 = 0, norm_output3 = 0, norm_output4 = 0, min = 9999999, temp_min1 = 9999999, temp_min2 = 9999999, temp_min3 = 9999999, temp_min4 = 9999999;
@@ -655,7 +562,7 @@ void receive() // void frame_length()
 
     MatrixXcd zero(2, 2), /*Y1(N, 2), Y2(N, 2),*/ I_s1s2(2, 2), I_s3s4(2, 2), I_s5s6(2, 2), I_s7s8(2, 2), I_diag(M, M), I_diag2(M, M), St1(M, M), /*y(N, M),*/ de_STBC(2, 2);
 
-    MatrixXcd st2(M, M), temp(M, 6), save(M, 6);
+    MatrixXcd st2(M, M), st4(M, M), temp(M, 6), save(M, 6);
 
     MatrixXcd *I_s1s2_ptr = &I_s1s2;
     MatrixXcd *I_s3s4_ptr = &I_s3s4;
@@ -695,26 +602,33 @@ void receive() // void frame_length()
         I_s7s8 << Q[i][6], -conj(Q[i][7]), Q[i][7], conj(Q[i][6]);
         I_s7s8 << 1 / sqrt(2.0) * I_s7s8;
 
-        m = (input_bits[i][0]) + ((input_bits[i][1]) << 1) + ((input_bits[i][2]) << 2) + ((input_bits[i][3]) << 3) + ((input_bits[i][4]) << 4) + ((input_bits[i][5]) << 5) + ((input_bits[i][6]) << 6) + ((input_bits[i][7]) << 7) + ((input_bits[i][8]) << 8) + ((input_bits[i][9]) << 9) + ((input_bits[i][10]) << 10) + ((input_bits[i][11]) << 11) + ((input_bits[i][12]) << 12) + ((input_bits[i][13]) << 13);
-
-        sp = m / 24;  // 交錯
+        for (int j = 0; j < antenna_number; j++){
+            m = input_bits[i][j] << j;
+        }
+        
         ant = m % 24; // 天線排列
+        sp = m / 24;  // 交錯
+        col = sp % 840;
+        row = sp / 840;
 
         I_diag << generation(&antenna_perm[ant][0], &antenna_perm[ant][1], &antenna_perm[ant][2], &antenna_perm[ant][3], I_s1s2_ptr, I_s3s4_ptr, I_s5s6_ptr, I_s7s8_ptr);
 
         // new define
         // 交錯樣式在接收端會解回來
-        st2.col(0) << I_diag.col(sp840[sp][0] - 1);
-        st2.col(1) << I_diag.col(sp840[sp][1] - 1);
-        st2.col(2) << I_diag.col(sp840[sp][2] - 1);
-        st2.col(3) << I_diag.col(sp840[sp][3] - 1);
-        st2.col(4) << I_diag.col(sp840[sp][4] - 1);
-        st2.col(5) << I_diag.col(sp840[sp][5] - 1);
-        st2.col(6) << I_diag.col(sp840[sp][6] - 1);
-        st2.col(7) << I_diag.col(sp840[sp][7] - 1);
+        st2.col(0) << I_diag.col(sp840[col][0] - 1);
+        st2.col(1) << I_diag.col(sp840[col][1] - 1);
+        st2.col(2) << I_diag.col(sp840[col][2] - 1);
+        st2.col(3) << I_diag.col(sp840[col][3] - 1);
+        st2.col(4) << I_diag.col(sp840[col][4] - 1);
+        st2.col(5) << I_diag.col(sp840[col][5] - 1);
+        st2.col(6) << I_diag.col(sp840[col][6] - 1);
+        st2.col(7) << I_diag.col(sp840[col][7] - 1);
+        for (int kk = 0; kk < 8; kk++) {
+				st4.row(kk) << st2.row(sp840[row][kk] - 1);
+			}
 
         // 傳送式子
-        y = H * st2; //+White_noise(N, M);
+        y = H * st4; //+White_noise(N, M);
 
         min = 9999999;
         norm_output = 0;
