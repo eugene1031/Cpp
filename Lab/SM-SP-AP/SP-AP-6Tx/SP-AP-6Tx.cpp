@@ -30,7 +30,7 @@
 #define  pi			    3.14159265359
 #define  bits_num       24 //原本19
 #define  antenna_number 12  //原本6
-#define	 data_rate  3.33333333333 //原本 19/6
+#define	 data_rate  	4 //原本 19/6
 #define  T				6
 
 using namespace std;
@@ -251,11 +251,15 @@ MatrixXcd de_generation(int* x, int* x1, int* x2, MatrixXcd* de_STBC, MatrixXcd*
 
 	(*de_STBC)(0, 1) = -conj((*de_STBC)(0, 1));
 	(*de_STBC)(1, 0) = -conj((*de_STBC)(1, 0));
+	(*de_STBC1)(0, 1) = -conj((*de_STBC1)(0, 1));
+	(*de_STBC1)(1, 0) = -conj((*de_STBC1)(1, 0));
+	(*de_STBC2)(0, 1) = -conj((*de_STBC2)(0, 1));
+	(*de_STBC2)(1, 0) = -conj((*de_STBC2)(1, 0));
 
 
 	time12 << ((*de_STBC) * ret(*x)).transpose();
-	time34 << ((*de_STBC) * ret(*x1)).transpose();
-	time56 << ((*de_STBC) * ret(*x2)).transpose();
+	time34 << ((*de_STBC1) * ret(*x1)).transpose();
+	time56 << ((*de_STBC2) * ret(*x2)).transpose();
 
 	//	cout << time12 << endl;
 	final_mat << time12, time34, time56;
@@ -299,8 +303,7 @@ void receive()//void frame_length()
 		{
 			input_bits[i][j] = rand() % 2;
 		}
-		//rember to change 
-		//antenna bits 8 9
+		//QPSK
 		for (int j = 0; j < M; j++)
 		{
 			Q[i][j] = qpsk_map[(input_bits[i][j * 2 + antenna_number] << 1) + input_bits[i][j * 2 + (antenna_number + 1)]];
@@ -344,16 +347,15 @@ void receive()//void frame_length()
 			st4.col(3) << I_diag.col(interleaved_pattern1[col][3] - 1);
 			st4.col(4) << I_diag.col(interleaved_pattern1[col][4] - 1);
 			st4.col(5) << I_diag.col(interleaved_pattern1[col][5] - 1);
-        for (int kk = 0; kk < 6; kk++) {
-				st2.row(kk) << st4.row(interleaved_pattern1[row][kk] - 1);
-			}
+        // for (int kk = 0; kk < 6; kk++) {
+		// 		st2.row(kk) << st4.row(interleaved_pattern1[row][kk] - 1);
+		// 	}
 		}
 
-		y = H * st2;// +White_noise(N, T);
+		y = H * st4;// +White_noise(N, T);
 
 		for (int mr = 0; mr < 4096; mr++)
 		{
-
 			temp_min1 = 999999;
 			temp_min2 = 999999;
 			temp_min3 = 999999;
@@ -363,13 +365,13 @@ void receive()//void frame_length()
 				for (int b = 0; b < 4; b++)
 				{
 					for (int c = 0; c < 4; c++)
-				{
-					for (int d = 0; d < 4; d++)
-				{
-					for (int e = 0; e < 4; e++)
-				{
-					for (int f = 0; f < 4; f++)
-				{
+					{
+						for (int d = 0; d < 4; d++)
+						{
+							for (int e = 0; e < 4; e++)
+							{
+								for (int f = 0; f < 4; f++)
+								{
 					de_STBC << qpsk_map[a], -conj(qpsk_map[b]), qpsk_map[b], conj(qpsk_map[a]);
 					de_STBC = 1 / sqrt(2.0) * de_STBC; //除以根號二
 					de_STBC1 << qpsk_map[c], -conj(qpsk_map[d]), qpsk_map[d], conj(qpsk_map[c]);
@@ -380,19 +382,20 @@ void receive()//void frame_length()
 						interleaved = mr / 6 % 60;
 						ref = mr % 6;
 						Y1Y2Y3(interleaved, 1); //col反回來
+
 						de_diag << de_generation(&antenna_perm2[ref][0], &antenna_perm2[ref][1], &antenna_perm2[ref][2], de_STBC_ptr, de_STBC1_ptr, de_STBC2_ptr);
 						
-						for (int kk = 0; kk < 6; kk++)
-						{
-							de_diag2.row(kk) << de_diag.row(interleaved_pattern1[mr / 6 / 60][kk] - 1);
-						}
+						// for (int kk = 0; kk < 6; kk++)
+						// {
+						// 	de_diag2.row(kk) << de_diag.row(interleaved_pattern1[mr / 6 / 60][kk] - 1);
+						// }
 
-						X1.col(0) << de_diag2.col(0);
-						X1.col(1) << de_diag2.col(1);
-						X2.col(0) << de_diag2.col(2);
-						X2.col(1) << de_diag2.col(3);
-						X3.col(0) << de_diag2.col(4);
-						X3.col(1) << de_diag2.col(5);
+						X1.col(0) << de_diag.col(0);
+						X1.col(1) << de_diag.col(1);
+						X2.col(0) << de_diag.col(2);
+						X2.col(1) << de_diag.col(3);
+						X3.col(0) << de_diag.col(4);
+						X3.col(1) << de_diag.col(5);
 						
 						norm_output1 = (Y1 - H * X1).norm();
 						norm_output2 = (Y2 - H * X2).norm();
@@ -400,42 +403,54 @@ void receive()//void frame_length()
 
 					}
 
-					if (norm_output1 < temp_min1) {
-						temp_min1 = norm_output1;
-						ab_save_temp[i][0] = a;
-						ab_save_temp[i][1] = b;
-					}
-					if (norm_output2 < temp_min2) {
-						temp_min2 = norm_output2;
-						ab_save_temp[i][2] = c;
-						ab_save_temp[i][3] = d;
-					}
-					if (norm_output3 < temp_min3) {
-						temp_min3 = norm_output3;
-						ab_save_temp[i][4] = e;
-						ab_save_temp[i][5] = f;
-					}
-
-				}
+					// if (norm_output1 < temp_min1) {
+					// 	temp_min1 = norm_output1;
+					// 	ab_save_temp[i][0] = a;
+					// 	ab_save_temp[i][1] = b;
+					// }
+					// if (norm_output2 < temp_min2) {
+					// 	temp_min2 = norm_output2;
+					// 	ab_save_temp[i][2] = c;
+					// 	ab_save_temp[i][3] = d;
+					// }
+					// if (norm_output3 < temp_min3) {
+					// 	temp_min3 = norm_output3;
+					// 	ab_save_temp[i][4] = e;
+					// 	ab_save_temp[i][5] = f;
+					// }
+					norm_output = (y - H * de_diag).norm();
+					if (norm_output < temp_min1) {
+										temp_min1 = norm_output;
+										ab_save_temp[i][0] = a;
+										ab_save_temp[i][1] = b;
+										ab_save_temp[i][2] = c;
+										ab_save_temp[i][3] = d;
+										ab_save_temp[i][4] = e;
+										ab_save_temp[i][5] = f;
+										//cout << "x = " << H * de_STBCnew1 << endl << endl;
+										//cout << "de_STBCnew1 = " <<  de_STBCnew1 << endl << endl;
+									}
+								}
 			}
 		}
 	}
 }
 }
-			norm_output = temp_min1 + temp_min2 + temp_min3;
-			//	cout << "mr = " << mr;
-			//	cout << "     norm_output = " << norm_output << endl; ;
-			if (norm_output < min)
-			{
-				min = norm_output;
-				m_save[i] = mr;
+norm_output = temp_min1;
+//+temp_min2 + temp_min3;
+//	cout << "mr = " << mr;
+//	cout << "     norm_output = " << norm_output << endl; ;
+if (norm_output < min)
+{
+min = norm_output;
+m_save[i] = mr;
 
-				ab_save[i][0] = ab_save_temp[i][0];
-				ab_save[i][1] = ab_save_temp[i][1];
-				ab_save[i][2] = ab_save_temp[i][2];
-				ab_save[i][3] = ab_save_temp[i][3];
-				ab_save[i][4] = ab_save_temp[i][4];
-				ab_save[i][5] = ab_save_temp[i][5];
+ab_save[i][0] = ab_save_temp[i][0];
+ab_save[i][1] = ab_save_temp[i][1];
+ab_save[i][2] = ab_save_temp[i][2];
+ab_save[i][3] = ab_save_temp[i][3];
+ab_save[i][4] = ab_save_temp[i][4];
+ab_save[i][5] = ab_save_temp[i][5];
 
 			}
 		}
@@ -450,9 +465,9 @@ void receive()//void frame_length()
 			decode_bits[i][k] = ((m_save[i] >> k) % 2);
 		}
 
-		for (int k = 0; k < 6; k++) {
-			decode_bits[i][k * 2 + 8] = (ab_save[i][k] >> 1) % 2;
-			decode_bits[i][k * 2 + 9] = (ab_save[i][k]) % 2;
+		for (int k = 0; k < M; k++) {
+			decode_bits[i][k * 2 + antenna_number] = (ab_save[i][k] >> 1) % 2;
+			decode_bits[i][k * 2 + (antenna_number + 1)] = (ab_save[i][k]) % 2;
 		}
 
 		for (int j = 0; j < bits_num; j++)

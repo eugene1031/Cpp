@@ -634,7 +634,7 @@ void receive() // void frame_length()
         norm_output = 0;
 
         // 接收端 解接收到的訊號回傳送訊號
-        for (int mr = 0; mr < 16384; mr++) // 0~16383 共16384種
+        for (int mr = 0; mr < 8388608; mr++) // 0~16383 共16384種
         {
             temp_min1 = 999999;
             temp_min2 = 999999;
@@ -642,8 +642,10 @@ void receive() // void frame_length()
             temp_min4 = 999999;
 
             interleaved = mr / 24;
+            //col = interleaved % 840;
+            //row = interleaved / 840;
             reference_order = mr % 24;
-            Y1Y2Y3Y4(interleaved, 0);
+            Y1Y2Y3Y4(interleaved % 840, 0);
 
             for (int a = 0; a < 4; a++)
             {
@@ -652,7 +654,7 @@ void receive() // void frame_length()
                     de_STBC << qpsk_map[a], -conj(qpsk_map[b]), qpsk_map[b], conj(qpsk_map[a]);
                     de_STBC = 1 / sqrt(2.0) * de_STBC;
 
-                    if (mr < 16384)
+                    if (mr < 8388608)
                     {
                         // 檢測式子 y-Hx 照理來說要等於0時存下來 是一個8*8的矩陣兩行兩行去解分成4個兩行去解
                         norm_output1 = (Y1 - channel_estimation(H_ptr, &antenna_perm[reference_order][0]) * de_STBC).norm();
@@ -741,8 +743,8 @@ void receive() // void frame_length()
         // 解後面的QPSK
         for (int k = 0; k < M; k++)
         {
-            decode_bits[i][k * 2 + 14] = (ab_save[i][k] >> 1) % 2; // 14是天線位元
-            decode_bits[i][k * 2 + 15] = (ab_save[i][k]) % 2;      // 15是天線位元+1
+            decode_bits[i][k * 2 + antenna_number] = (ab_save[i][k] >> 1) % 2; // 14是天線位元
+            decode_bits[i][k * 2 + (antenna_number + 1)] = (ab_save[i][k]) % 2;      // 15是天線位元+1
         }
         // 解天線
     }
