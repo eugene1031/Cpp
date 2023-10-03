@@ -15,7 +15,7 @@
 #define OPENSTRING "#Eb/No(dB) BitErrRate         BitErrSample  TotalSample \n"
 #define DATASTRING "%5.2f      %18.16f %7d %11u 1207\n", \
                    (snrdb), (double)biterrno / dsignal, biterrno, dsignal, deviate
-#define DB0 0.0
+#define DB0 -10.0
 #define DBSTEP 5.0
 #define POINTNO 20
 #define ERRNOSTEP 2
@@ -28,8 +28,9 @@
 #define frame_w 20 // 35
 #define sqrt2 0.70710678118654752440084436210485
 #define pi 3.14159265359
-#define bits_num 39       // 28
-#define antenna_number 23 // 0~13
+#define bits_num 37       // 28
+#define antenna_number 21 // 0~13
+double data_rate = bits_num / M;
 
 using namespace std;
 using namespace Eigen;
@@ -422,9 +423,11 @@ void change4(int a, int b, int c, int d, int e, int f, int g, int h, int th)
 }
 //==========================================================================================================================
 
-MatrixXcd H(N, M), H_test(N, 2), noise(N, M);
+MatrixXcd H(N, M), H_test(N, 2), H_new(N, M), noise(N, M);
 MatrixXcd Y1(N, 2), Y2(N, 2), Y3(N, 2), Y4(N, 2), y(N, M), NY(N, M);
-MatrixXcd temp(N, 6), save(N, 6), Y1_temp(N, 2), Y2_temp(N, 2), Y3_temp(N, 2), Y4_temp(N, 2);
+MatrixXcd temp(N, 6), save(N, 6), Y1_temp(N, 2), Y2_temp(N, 2), Y3_temp(N, 2), Y4_temp(N, 2), I_identity(M, M), I_row(M, M);
+
+
 void fading_channel(int row, int col)
 {
     for (int a = 0; a < row; a++)
@@ -447,32 +450,37 @@ MatrixXcd White_noise(int row, int col)
     return noise;
 }
 
-MatrixXcd channel_estimation(MatrixXcd *H, int *reference_order)
+MatrixXcd channel_estimation(MatrixXcd *H, int *reference_order, int *de_row)
 {
+    I_identity.setIdentity(M, M);
+    for (int i = 0; i < M; i++){
+        I_row.row(i) << I_identity.row(sp105[*de_row][i] - 1);
+    }
+    H_new = *H * I_row;
     // 天線排列
     // 第12時間
     if (*reference_order == 1)
     {
-        H_test.col(0) << (*H).col(0);
-        H_test.col(1) << (*H).col(1);
+        H_test.col(0) << (H_new).col(0);
+        H_test.col(1) << (H_new).col(1);
     }
     // 第34時間
     if (*reference_order == 2)
     {
-        H_test.col(0) << (*H).col(2);
-        H_test.col(1) << (*H).col(3);
+        H_test.col(0) << (H_new).col(2);
+        H_test.col(1) << (H_new).col(3);
     }
     // 第56時間
     if (*reference_order == 3)
     {
-        H_test.col(0) << (*H).col(4);
-        H_test.col(1) << (*H).col(5);
+        H_test.col(0) << (H_new).col(4);
+        H_test.col(1) << (H_new).col(5);
     }
     // 第78時間
     if (*reference_order == 4)
     {
-        H_test.col(0) << (*H).col(6);
-        H_test.col(1) << (*H).col(7);
+        H_test.col(0) << (H_new).col(6);
+        H_test.col(1) << (H_new).col(7);
     }
     return H_test;
 }
@@ -553,7 +561,7 @@ void receive() // void frame_length()
 {
     // srand((unsigned)time(NULL));
 
-    int input_bits[frame_w][bits_num], decode_bits[frame_w][bits_num], ab_save[frame_w][M], ab_save_temp[frame_w][M], m_save[frame_w], c_save[frame_w], final_save[frame_w], interleaved, reference_order, m, r, g, sp, ant, col, row;
+    int input_bits[frame_w][bits_num], decode_bits[frame_w][bits_num], ab_save[frame_w][M], ab_save_temp[frame_w][M], m_save[frame_w], c_save[frame_w], final_save[frame_w], interleaved, reference_order, r, g, sp, ant, col, row;
     double norm_save[16384] = {0};
     int debug_savem[16384] = {0};
     double norm_output = 0, norm_output1 = 0, norm_output2 = 0, norm_output3 = 0, norm_output4 = 0, min = 9999999, temp_min1 = 9999999, temp_min2 = 9999999, temp_min3 = 9999999, temp_min4 = 9999999;
@@ -583,12 +591,12 @@ void receive() // void frame_length()
         {
             input_bits[i][j] = rand() % 2;
         }
-
+        
         // 天線bits是14 [0~13]再傳天線 [14~29] 才再傳QPSK
 
         for (int j = 0; j < M; j++)
         {
-            Q[i][j] = qpsk_map[(input_bits[i][j * 2 + 14] << 1) + input_bits[i][j * 2 + (14 + 1)]];
+            Q[i][j] = qpsk_map[(input_bits[i][j * 2 + antenna_number] << 1) + input_bits[i][j * 2 + (antenna_number + 1)]];
         }
 
         min = 999999;
@@ -602,10 +610,12 @@ void receive() // void frame_length()
         I_s7s8 << Q[i][6], -conj(Q[i][7]), Q[i][7], conj(Q[i][6]);
         I_s7s8 << 1 / sqrt(2.0) * I_s7s8;
 
-        for (int j = 0; j < antenna_number; j++){
-            m = input_bits[i][j] << j;
+        int m = 0;
+        for (int j = 0; j < antenna_number; j++)
+        {
+            m += (input_bits[i][j] << j);
         }
-        
+
         ant = m % 24; // 天線排列
         sp = m / 24;  // 交錯
         col = sp % 840;
@@ -624,7 +634,7 @@ void receive() // void frame_length()
         st2.col(6) << I_diag.col(sp840[col][6] - 1);
         st2.col(7) << I_diag.col(sp840[col][7] - 1);
         for (int kk = 0; kk < 8; kk++) {
-				st4.row(kk) << st2.row(sp840[row][kk] - 1);
+				st4.row(kk) << st2.row(sp105[row][kk] - 1);
 			}
 
         // 傳送式子
@@ -634,7 +644,7 @@ void receive() // void frame_length()
         norm_output = 0;
 
         // 接收端 解接收到的訊號回傳送訊號
-        for (int mr = 0; mr < 8388608; mr++) // 0~16383 共16384種
+        for (int mr = 0; mr < 2097152; mr++) // 0~16383 共16384種
         {
             temp_min1 = 999999;
             temp_min2 = 999999;
@@ -642,10 +652,10 @@ void receive() // void frame_length()
             temp_min4 = 999999;
 
             interleaved = mr / 24;
-            //col = interleaved % 840;
-            //row = interleaved / 840;
+            int de_col = interleaved % 840;
+            int de_row = interleaved / 840;
             reference_order = mr % 24;
-            Y1Y2Y3Y4(interleaved % 840, 0);
+            Y1Y2Y3Y4(de_col, 0);
 
             for (int a = 0; a < 4; a++)
             {
@@ -654,13 +664,13 @@ void receive() // void frame_length()
                     de_STBC << qpsk_map[a], -conj(qpsk_map[b]), qpsk_map[b], conj(qpsk_map[a]);
                     de_STBC = 1 / sqrt(2.0) * de_STBC;
 
-                    if (mr < 8388608)
+                    if (mr < 2097152)
                     {
                         // 檢測式子 y-Hx 照理來說要等於0時存下來 是一個8*8的矩陣兩行兩行去解分成4個兩行去解
-                        norm_output1 = (Y1 - channel_estimation(H_ptr, &antenna_perm[reference_order][0]) * de_STBC).norm();
-                        norm_output2 = (Y2 - channel_estimation(H_ptr, &antenna_perm[reference_order][1]) * de_STBC).norm();
-                        norm_output3 = (Y3 - channel_estimation(H_ptr, &antenna_perm[reference_order][2]) * de_STBC).norm();
-                        norm_output4 = (Y4 - channel_estimation(H_ptr, &antenna_perm[reference_order][3]) * de_STBC).norm();
+                        norm_output1 = (Y1 - channel_estimation(H_ptr, &antenna_perm[reference_order][0], &de_row) * de_STBC).norm();
+                        norm_output2 = (Y2 - channel_estimation(H_ptr, &antenna_perm[reference_order][1], &de_row) * de_STBC).norm();
+                        norm_output3 = (Y3 - channel_estimation(H_ptr, &antenna_perm[reference_order][2], &de_row) * de_STBC).norm();
+                        norm_output4 = (Y4 - channel_estimation(H_ptr, &antenna_perm[reference_order][3], &de_row) * de_STBC).norm();
                     }
 
                     // 因此使用for迴圈去找最小值一直到接近0或等於零食存入
@@ -725,20 +735,9 @@ void receive() // void frame_length()
     for (int i = 0; i < frame_w; i++)
     {
         // msave裡的10進制轉成2進制重新放回decodebits中 最右邊是最高位元跟一般寫字相反 >>右移是除
-        decode_bits[i][0] = ((m_save[i]) % 2);
-        decode_bits[i][1] = ((m_save[i] >> 1) % 2);
-        decode_bits[i][2] = ((m_save[i] >> 2) % 2);
-        decode_bits[i][3] = ((m_save[i] >> 3) % 2);
-        decode_bits[i][4] = ((m_save[i] >> 4) % 2);
-        decode_bits[i][5] = ((m_save[i] >> 5) % 2);
-        decode_bits[i][6] = ((m_save[i] >> 6) % 2);
-        decode_bits[i][7] = ((m_save[i] >> 7) % 2);
-        decode_bits[i][8] = ((m_save[i] >> 8) % 2);
-        decode_bits[i][9] = ((m_save[i] >> 9) % 2);
-        decode_bits[i][10] = ((m_save[i] >> 10) % 2);
-        decode_bits[i][11] = ((m_save[i] >> 11) % 2);
-        decode_bits[i][12] = ((m_save[i] >> 12) % 2);
-        decode_bits[i][13] = ((m_save[i] >> 13) % 2);
+        for (int k = 0; k < antenna_number; k++) {
+			decode_bits[i][k] = ((m_save[i] >> k) % 2);
+		}
 
         // 解後面的QPSK
         for (int k = 0; k < M; k++)
@@ -760,7 +759,7 @@ void receive() // void frame_length()
         dsignal += bits_num;
     }
 
-    /*
+    
     for (int i = 0; i < frame_w; i++) {
         for (int j = 0; j < bits_num; j++) {
             cout << input_bits[i][j];
@@ -772,7 +771,7 @@ void receive() // void frame_length()
         puts("");
         puts("");
     }
-    */
+    
 }
 int main()
 {
@@ -795,7 +794,7 @@ int main()
     {
         pnstate = 0xaaaaaaaaL;
         snrdb = DB0 + point * DBSTEP;
-        snr = (3.75) * pow(10.0, 0.1 * snrdb); //(bitsnum / timenum)
+        snr = (data_rate) * pow(10.0, 0.1 * snrdb); //(bitsnum / timenum)
         deviate = sqrt(0.5 / snr);
         biterrno = 0;
         errlevel = ERRNOSTEP;
@@ -811,7 +810,6 @@ int main()
             for (samp = 0; samp < SAMPLE_NUM; samp++)
             {
                 receive();
-
                 printf("%5.2f   %18.16f   %7d   %11u \n", (snrdb), (double)biterrno / dsignal, biterrno, dsignal, deviate);
             }
         }

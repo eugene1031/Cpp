@@ -125,15 +125,15 @@ int antenna_perm[2][2] = { 1,2,
 							2,1 };
 
 MatrixXcd H(N, M), H_test(N, M / 2), noise(N, M);
-
 MatrixXcd  Y1(N, 2), Y2(N, 2), y(N, M), new_y(N, M); //new define new_Y
-void fading_channel(int row, int col) {
+
+void fading_channel(int row, int col)
+{
 	for (int a = 0; a < row; a++) {
 		for (int b = 0; b < col; b++) {
 			H(a, b) = (complex<double>(normal(), normal())) / sqrt(2.0);
 		}
 	}
-
 }
 MatrixXcd White_noise(int row, int col) {
 	for (int a = 0; a < row; a++) {
