@@ -107,23 +107,27 @@ void Vector<T>::Push_Back(T data)
 template <typename T>
 void Vector<T>::Pop_Back()
 {
-    Len--;
-    T *tmp = (T *)malloc(sizeof(T) * Len);
-    for (int i = 0; i < Len; i++)
-    {
-        tmp[i] = Pointer[i];
+    if(Empty()){
+        return;
     }
-    free(Pointer);
-    Pointer = tmp;
+    Len--;
 }
 
 template <typename T>
 void Vector<T>::Insert(int Index, T data)
 {
-    if (Index >= Size())
+    if (Index > Size())
         return;
     if (Index < 0)
         return;
+    if(Len == Capacity){
+        if(Capacity == 0){
+            Reserve(1);
+        }
+        else{
+            Reserve(Capacity * 2);
+        }
+    }
     Len++;
     T *tmp = (T *)malloc(sizeof(T) * Len);
     for (int i = 0; i < Len; i++)
