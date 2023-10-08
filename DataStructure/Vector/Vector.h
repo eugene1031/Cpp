@@ -128,25 +128,11 @@ void Vector<T>::Insert(int Index, T data)
             Reserve(Capacity * 2);
         }
     }
-    Len++;
-    T *tmp = (T *)malloc(sizeof(T) * Len);
-    for (int i = 0; i < Len; i++)
-    {
-        if (i < Index)
-        {
-            tmp[i] = Pointer[i];
-        }
-        else if (i == Index)
-        {
-            tmp[i] = data;
-        }
-        else
-        {
-            tmp[i] = Pointer[i - 1];
-        }
+    for (int i = Len - 1; i >= Index; i--){
+        Pointer[i + 1] = Pointer[i];
     }
-    free(Pointer);
-    Pointer = tmp;
+    Pointer[Index] = data;
+    Len++;
 }
 
 template <typename T>
@@ -156,50 +142,28 @@ void Vector<T>::Erase(int Index)
         return;
     if (Index >= Size())
         return;
-    Len--;
-    T *tmp = (T *)malloc(sizeof(T) * Len);
-    for (int i = 0; i < Len; i++)
-    {
-        if (i < Index)
-        {
-            tmp[i] = Pointer[i];
-        }
-        else if (i > Index)
-        {
-            tmp[i] = Pointer[i + 1];
-        }
+    for (int i = Index + 1; i < Len; i++){
+        Pointer[i - 1] = Pointer[i];
     }
-    free(Pointer);
-    Pointer = tmp;
+        Len--;
 }
 
 template <typename T>
 void Vector<T>::Erase(int Start, int End)
 {
-    // if(Empty()){
-    // return;
-    // }
-    // if(End >= Size())
-    // return;
-    // if(End <= Start)
-    // return;
-    // if (Start < 0)
-    // return;
-    Len -= End - Start; // Start = 3, End = 6 -> Delete: 3, 4, 5
-    T *tmp = (T *)malloc(sizeof(T) * Len);
-    for (int i = 0; i < Len; i++)
-    {
-        if (i < Start)
-        {
-            tmp[i] = Pointer[i];
-        }
-        else
-        {
-            tmp[i] = Pointer[i + (End - Start)];
-        }
+    if(Empty()){
+    return ;
     }
-    free(Pointer);
-    Pointer = tmp;
+    if(End >= Size())
+    return ;
+    if(End <= Start)
+    return ;
+    if (Start < 0)
+    return ;
+    for (int i = End; i < Len; i++){
+    Pointer[i - (End - Start)] = Pointer[i];
+    }
+    Len -= End - Start; // Start = 3, End = 6 -> Delete: 3, 4, 5
 }
 
 template <typename T>
