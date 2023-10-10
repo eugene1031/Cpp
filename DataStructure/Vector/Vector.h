@@ -10,6 +10,20 @@ private:
     int Capacity;
 
 public:
+    class Iterator{
+        private:
+            T *iter;
+        public:
+            Iterator(T* = nullptr);
+            void operator++();  //++Iterator
+            void operator--();  
+            void operator++(int);   //Iterator++
+            void operator--(int);
+            bool operator==(Iterator &);
+            bool operator!=(Iterator &);
+            void operator=(Iterator &);
+            T operator*();
+    };
     Vector(int = 0);
     ~Vector();
     T Front();
@@ -27,6 +41,34 @@ public:
     void Reserve(int);
     void Resize(int);
 };
+template<typename T>
+Vector<T>::Iterator::Iterator(T *pointer= nullptr){
+    iter = pointer;
+};
+template<typename T>
+void Vector<T>::Iterator::operator++(){  //++Iterator
+    iter++;
+}
+template<typename T>
+void Vector<T>::Iterator:: operator--(){
+    iter--;
+}
+template<typename T> 
+void Vector<T>::Iterator:: operator++(int){  //Iterator++
+    iter++;
+}
+template<typename T>
+void Vector<T>::Iterator:: operator--(int){
+    iter--;
+}
+template<typename T>
+bool Vector<T>::Iterator:: operator==(Iterator &);
+template<typename T>
+bool Vector<T>::Iterator:: operator!=(Iterator &);
+template<typename T>
+void Vector<T>::Iterator:: operator=(Iterator &);
+template<typename T>
+Vector<T>::Iterator::T operator*();
 template <typename T>
 Vector<T>::Vector(int length)
 {
