@@ -1,5 +1,7 @@
 #ifndef VECTOR_H_INCLUDED
 #define VECTOR_H_INCLUDED
+#include <cstdlib>
+
 
 template <typename T>
 class Vector
@@ -12,17 +14,24 @@ private:
 public:
     class Iterator{
         private:
-            T *iter;
+            T* iter;
         public:
             Iterator(T* = nullptr);
             void operator++();  //++Iterator
             void operator--();  
             void operator++(int);   //Iterator++
             void operator--(int);
-            bool operator==(Iterator &);
-            bool operator!=(Iterator &);
-            void operator=(Iterator &);
-            T operator*();
+            bool operator==(Iterator);
+            bool operator!=(Iterator);
+            bool operator>(Iterator);
+            bool operator<(Iterator);
+            bool operator>=(Iterator);
+            bool operator<=(Iterator);
+            void operator=(Iterator);
+            int operator-(Iterator);
+            Iterator operator+(int);
+            Iterator operator-(int);
+            T& operator* ();
     };
     Vector(int = 0);
     ~Vector();
@@ -34,15 +43,45 @@ public:
     bool Empty();
     void Push_Back(T);
     void Pop_Back();
-    void Insert(int, T);
-    void Erase(int);
-    void Erase(int, int);
+    void Insert(Iterator, T);
+    void Erase(Iterator);
+    void Erase(Iterator, Iterator);
     void Clear();
     void Reserve(int);
     void Resize(int);
+    Iterator Begin();
+    Iterator End();
 };
+
 template<typename T>
-Vector<T>::Iterator::Iterator(T *pointer= nullptr){
+typename Vector<T>::Iterator Find(Vector<T> v, T data){
+    for (auto iter = v.Begin(); iter != v.End(); iter++){
+       if(*iter == data){
+           return iter;
+       }
+       return v.End();
+    }
+}
+template<typename T>
+typename Vector<T>::Iterator Remove(Vector<T> v, T target){
+    int counts = 0;
+    for (auto iter = v.Begin(); iter != v.End(); iter++)
+    {
+       if(*iter == target){
+           continue;
+       }
+       *(v.Begin() + counts) = *iter;
+       counts++;
+    }
+    for (auto iter = (v.Begin() + counts); iter != v.End(); iter++)
+    {
+       *iter = target;
+    }
+    return v.Begin() + counts;
+}
+
+template<typename T>
+Vector<T>::Iterator::Iterator(T *pointer){
     iter = pointer;
 };
 template<typename T>
@@ -62,13 +101,49 @@ void Vector<T>::Iterator:: operator--(int){
     iter--;
 }
 template<typename T>
-bool Vector<T>::Iterator:: operator==(Iterator &);
+bool Vector<T>::Iterator:: operator==(Iterator iter2){
+    return iter == iter2.iter;
+}
 template<typename T>
-bool Vector<T>::Iterator:: operator!=(Iterator &);
+bool Vector<T>::Iterator:: operator!=(Iterator iter2){
+    return iter != iter2.iter;
+}
 template<typename T>
-void Vector<T>::Iterator:: operator=(Iterator &);
+bool Vector<T>::Iterator:: operator>(Iterator iter2){
+    return iter > iter2.iter;
+}
 template<typename T>
-Vector<T>::Iterator::T operator*();
+bool Vector<T>::Iterator:: operator<(Iterator iter2){
+    return iter < iter2.iter;
+}
+template<typename T>
+bool Vector<T>::Iterator::operator>=(Iterator iter2){
+    return iter >= iter2.iter;
+}
+template<typename T>
+bool Vector<T>::Iterator::operator<=(Iterator iter2){
+    return iter <= iter2.iter;
+}
+template<typename T>
+void Vector<T>::Iterator:: operator=(Iterator iter2){
+    iter = iter2.iter;
+}
+template<typename T>
+T &Vector<T>::Iterator::operator*(){
+    return *iter;
+}
+template <typename T>
+typename Vector<T>::Iterator Vector<T>::Begin()
+{
+    Iterator result(Pointer);
+    return result;
+}
+template <typename T>
+typename Vector<T>::Iterator Vector<T>::End()
+{
+    Iterator result(Pointer + Len);
+    return result;
+}
 template <typename T>
 Vector<T>::Vector(int length)
 {
@@ -156,11 +231,11 @@ void Vector<T>::Pop_Back()
 }
 
 template <typename T>
-void Vector<T>::Insert(int Index, T data)
+void Vector<T>::Insert(Iterator iter2, T data)
 {
-    if (Index > Size())
+    if (iter2 >= End())
         return;
-    if (Index < 0)
+    if (iter2 < Begin())
         return;
     if(Len == Capacity){
         if(Capacity == 0){
@@ -170,50 +245,72 @@ void Vector<T>::Insert(int Index, T data)
             Reserve(Capacity * 2);
         }
     }
-    for (int i = Len - 1; i >= Index; i--){
-        Pointer[i + 1] = Pointer[i];
+    auto tmp = iter2;
+    for (iter2 = End(); iter2 >= tmp; iter2--)
+    {
+        *(iter2 + 1) = *(iter2);
     }
-    Pointer[Index] = data;
+    *(tmp) = data;
     Len++;
 }
 
 template <typename T>
-void Vector<T>::Erase(int Index)
+void Vector<T>::Erase(Iterator iter2)
 {
     if (Empty())
-        return;
-    if (Index >= Size())
-        return;
-    for (int i = Index + 1; i < Len; i++){
-        Pointer[i - 1] = Pointer[i];
+        return ;
+    if (iter2 >= End())
+        return ;
+    if(iter2 < Begin())
+        return ;
+    for (iter2++; iter2 < End(); iter2++)
+    {
+        *(iter2 - 1) = *(iter2);
     }
         Len--;
 }
 
 template <typename T>
-void Vector<T>::Erase(int Start, int End)
+void Vector<T>::Erase(Iterator start, Iterator finish)
 {
     if(Empty()){
     return ;
     }
-    if(End >= Size())
+    if(finish >= End())
     return ;
-    if(End <= Start)
+    if(finish <= start)
     return ;
-    if (Start < 0)
+    if (start < End())
     return ;
-    for (int i = End; i < Len; i++){
-    Pointer[i - (End - Start)] = Pointer[i];
-    }
-    Len -= End - Start; // Start = 3, End = 6 -> Delete: 3, 4, 5
-}
 
+    auto tmp = finish;
+    for (; tmp < End(); tmp++)
+    {
+    *(tmp - (finish - start)) = *tmp;
+    }
+    Len -= (finish - start); // Start = 3, End = 6 -> Delete: 3, 4, 5
+}
+template <typename T>
+int Vector<T>::Iterator::operator-(Iterator iter2){
+    return (iter - iter2.iter);
+}
+template <typename T>
+typename Vector<T>::Iterator Vector<T>::Iterator::operator+(int offset){
+    Iterator result(iter + offset);
+    return result;
+}
+template <typename T>
+typename Vector<T>::Iterator Vector<T>::Iterator::operator-(int offset){
+    Iterator result(iter - offset);
+    return result;
+}
 template <typename T>
 void Vector<T>::Clear()
 {
     free(Pointer);
     Len = 0;
     Capacity = 0;
+    Pointer = nullptr;
 }
 
 template <typename T>
@@ -245,5 +342,6 @@ void Vector<T>::Resize(int N)
         Len = N;
     }
 }
+
 
 #endif
