@@ -174,15 +174,15 @@ MatrixXcd Gmatrix(int g)
 	}
 
 }
-int find3And4Zero(int x, int y , double a, double b, double c, double d) {
+int find3And4Zero(int x, int y, double a, double b, double c, double d) {
 	int count = 0;
-	if (a == 0.0)
+	if (fabs(a) < 1e-6)
 		count = count + 1;
-	if (b == 0.0)
+	if (fabs(b) < 1e-6)
 		count = count + 1;
-	if (c == 0.0)
+	if (fabs(c) < 1e-6)
 		count = count + 1;
-	if (d == 0.0)
+	if (fabs(d) < 1e-6)
 		count = count + 1;
 	return count;
 }
@@ -356,8 +356,11 @@ void TxRx()
 			
 			
 
-
-			fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), a, b);
+			if (find3And4Zero(a, b, ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3)) == 2)
+            {
+			fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), abs(((Dij_matrix.eigenvalues()).real())(0)), abs(((Dij_matrix.eigenvalues()).real())(1)), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), (((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3)), a, b);
+            }
+			//fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), a, b);
 
 
 

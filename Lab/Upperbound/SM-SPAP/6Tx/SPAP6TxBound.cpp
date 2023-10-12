@@ -11,7 +11,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
 
-#define  OUTPUTFILE  "stbcsmspap6Tx6t.txt"
+#define  OUTPUTFILE  "stbcsmspap6Tx.txt"
 #define  OUTPUTFILEA  "bbb.txt"
 #define  OUTPUTFILED "stbcsmspap6txdebug.txt"
 
@@ -169,20 +169,19 @@ int hammingDistance(int x, int y) {
 	}
 	return ans;
 }
-
 int find3And4Zero(int x, int y, double a, double b, double c, double d, double e, double f) {
 	int count = 0;
-	if (a == 0.0)
+	if (fabs(a) < 1e-6)
 		count = count + 1;
-	if (b == 0.0)
+	if (fabs(b) < 1e-6)
 		count = count + 1;
-	if (c == 0.0)
+	if (fabs(c) < 1e-6)
 		count = count + 1;
-	if (d == 0.0)
+	if (fabs(d) < 1e-6)
 		count = count + 1;
-	if (e == 0.0)
+	if (fabs(e) < 1e-6)
 		count = count + 1;
-	if (f == 0.0)
+	if (fabs(f) < 1e-6)
 		count = count + 1;
 	return count;
 }
@@ -378,7 +377,11 @@ void TxRx()
 			*/
 			//hammingDistance(a, b);
 			//if(b < 1048576)
-			fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), ((Dij_matrix.eigenvalues()).real())(4), ((Dij_matrix.eigenvalues()).real())(5), a, b);
+			if (find3And4Zero(a, b, ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), ((Dij_matrix.eigenvalues()).real())(4), ((Dij_matrix.eigenvalues()).real())(5)) == 4)
+            {
+			fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), abs(((Dij_matrix.eigenvalues()).real())(0)), abs(((Dij_matrix.eigenvalues()).real())(1)), abs(((Dij_matrix.eigenvalues()).real())(2)), abs(((Dij_matrix.eigenvalues()).real())(3)), ((Dij_matrix.eigenvalues()).real())(4), ((Dij_matrix.eigenvalues()).real())(5), (((Dij_matrix.eigenvalues()).real())(4) * ((Dij_matrix.eigenvalues()).real())(5)), a, b);
+            }
+			//fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), ((Dij_matrix.eigenvalues()).real())(4), ((Dij_matrix.eigenvalues()).real())(5), a, b);
 			//else
 			//	fprintf(fpa, "%d    %.5f%10.5f%10.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), ((Dij_matrix.eigenvalues()).real())(4), ((Dij_matrix.eigenvalues()).real())(5), a, b);
 			cout << " a = " << a << " b = " << b << endl;
