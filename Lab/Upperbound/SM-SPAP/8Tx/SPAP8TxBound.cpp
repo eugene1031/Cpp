@@ -465,34 +465,57 @@ void TxRx()
 	int two = 0, four = 0;
 	for (int a = 0; a < 1; a++) {  //for (int a = 0; a < codeword - 1; a++) {
 
-		for (int b = 1; b < codeword; b++) { //for (int b = a + 1; b < codeword; b++) { //for (int b = 1; b < codeword; b++) {
+		for (int b = 1; b < 256; b++) { //for (int b = a + 1; b < codeword; b++) { //for (int b = 1; b < codeword; b++) {
 
 			//if (b != a) {
+			s[0][0] = 0;
+			s[0][1] = 0;
 
-			s[0][0] = qpsk_map[0];
-			s[0][1] = qpsk_map[0];
+			s[0][2] = 0;
+			s[0][3] = 0;
 
-			s[0][2] = qpsk_map[0];
-			s[0][3] = qpsk_map[0];
+			s[0][4] = 0;
+			s[0][5] = 0;
 
-			s[0][4] = qpsk_map[0];
-			s[0][5] = qpsk_map[0];
-
-			s[0][6] = qpsk_map[0];
-			s[0][7] = qpsk_map[0];
+			s[0][6] = 0;
+			s[0][7] = 0;
 
 			//2048=2^11
-			s[1][0] = qpsk_map[0];
-			s[1][1] = qpsk_map[0];
-			  
-			s[1][2] = qpsk_map[0];
-			s[1][3] = qpsk_map[0];
-			  
-			s[1][4] = qpsk_map[0];
-			s[1][5] = qpsk_map[0];
-			  
-			s[1][6] = qpsk_map[0];
-			s[1][7] = qpsk_map[0];
+			s[1][0] = 0;
+			s[1][1] = 0;
+
+			s[1][2] = 0;
+			s[1][3] = 0;
+
+			s[1][4] = 0;
+			s[1][5] = 0;
+
+			s[1][6] = 0;
+			s[1][7] = 1;
+			// s[0][0] = qpsk_map[((a / 32768) % 2) * 2 + ((a / 16384) % 2)];
+			// s[0][1] = qpsk_map[((a / 8192) % 2) * 2 + ((a / 4096) % 2)];
+
+			// s[0][2] = qpsk_map[((a / 2048) % 2) * 2 + ((a / 1024) % 2)];
+			// s[0][3] = qpsk_map[((a / 512) % 2) * 2 + ((a / 256) % 2)];
+
+			// s[0][4] = qpsk_map[((a / 128) % 2) * 2 + ((a / 64) % 2)];
+			// s[0][5] = qpsk_map[((a / 32) % 2) * 2 + ((a / 16) % 2)];
+
+			// s[0][6] = qpsk_map[((a / 8) % 2) * 2 + ((a / 4) % 2)];
+			// s[0][7] = qpsk_map[((a / 2) % 2) * 2 + (a % 2)];
+
+			// //2048=2^11
+			// s[1][0] = qpsk_map[((b / 32768) % 2) * 2 + ((b / 16384) % 2)];
+			// s[1][1] = qpsk_map[((b / 8192) % 2) * 2 + ((b / 4096) % 2)];
+
+			// s[1][2] = qpsk_map[((b / 2048) % 2) * 2 + ((b / 1024) % 2)];
+			// s[1][3] = qpsk_map[((b / 512) % 2) * 2 + ((b / 256) % 2)];
+
+			// s[1][4] = qpsk_map[((b / 128) % 2) * 2 + ((b / 64) % 2)];
+			// s[1][5] = qpsk_map[((b / 32) % 2) * 2 + ((b / 16) % 2)];
+
+			// s[1][6] = qpsk_map[((b / 8) % 2) * 2 + ((b / 4) % 2)];
+			// s[1][7] = qpsk_map[((b / 2) % 2) * 2 + (b % 2)];
 
 
 			I_s1s2 << s[0][0], -conj(s[0][1]), s[0][1], conj(s[0][0]);
@@ -537,7 +560,7 @@ void TxRx()
 			//100000000000000000000 = 1048576
 
 			//original mb
-			/*m_b = 1048576 * ((b / 524288) % 2)
+			m_b = 1048576 * ((b / 524288) % 2)
 				+ 524288 * ((b / 262144) % 2)
 				+ 262144 * ((b / 131072) % 2)
 				+ 131072 * ((b / 65536) % 2)
@@ -557,13 +580,13 @@ void TxRx()
 				+ 8 * ((b / 8) % 2)
 				+ 4 * ((b / 4) % 2)
 				+ 2 * ((b / 2) % 2)
-				+ ((b / 1) % 2);*/
+				+ ((b / 1) % 2);
 			//cout << "mb" << m_b << endl;
 
-			r_b = b % 24;  //天線排列又稱reference order
+			r_b = m_b % 24;  //天線排列又稱reference order
 			//interleaved
-			col_b = b / 24 % 840;
-			row_b = b / 24 / 840;
+			col_b = m_b / 24 % 840;
+			row_b = m_b / 24 / 840;
 
 			Q_diag << generation(&antenna_perm[r_b][0], &antenna_perm[r_b][1], &antenna_perm[r_b][2], &antenna_perm[r_b][3], Q_s1s2_ptr, Q_s3s4_ptr, Q_s5s6_ptr, Q_s7s8_ptr);
 
@@ -605,10 +628,10 @@ void TxRx()
 			*/
 			//hammingDistance(a, b);
 			//if(b < 1048576)
-			if (find3And4Zero(a, b, ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), ((Dij_matrix.eigenvalues()).real())(4), ((Dij_matrix.eigenvalues()).real())(5), ((Dij_matrix.eigenvalues()).real())(6), ((Dij_matrix.eigenvalues()).real())(7)) == 6)
-			{
+			//if (find3And4Zero(a, b, ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), ((Dij_matrix.eigenvalues()).real())(4), ((Dij_matrix.eigenvalues()).real())(5), ((Dij_matrix.eigenvalues()).real())(6), ((Dij_matrix.eigenvalues()).real())(7)) == 6)
+			//{
 				fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10.5f%10.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), abs(((Dij_matrix.eigenvalues()).real())(0)), abs(((Dij_matrix.eigenvalues()).real())(1)), abs(((Dij_matrix.eigenvalues()).real())(2)), abs(((Dij_matrix.eigenvalues()).real())(3)), abs(((Dij_matrix.eigenvalues()).real())(4)), abs(((Dij_matrix.eigenvalues()).real())(5)), ((Dij_matrix.eigenvalues()).real())(6), ((Dij_matrix.eigenvalues()).real())(7), (((Dij_matrix.eigenvalues()).real())(6) * ((Dij_matrix.eigenvalues()).real())(7)), a, b);
-			}
+			//}
 			//fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), ((Dij_matrix.eigenvalues()).real())(4), ((Dij_matrix.eigenvalues()).real())(5), a, b);
 			//else
 			//	fprintf(fpa, "%d    %.5f%10.5f%10.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), ((Dij_matrix.eigenvalues()).real())(4), ((Dij_matrix.eigenvalues()).real())(5), a, b);

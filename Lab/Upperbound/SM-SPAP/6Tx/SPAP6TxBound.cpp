@@ -31,7 +31,7 @@
 #define  frame_w        1
 #define  sqrt2          0.70710678118654752440084436210485
 #define  pi			    3.14159265359
-#define	 bits_num		20
+#define	 bits_num		24
 #define  inter	        2
 #define  codeword	    16777216 // 2^24
 
