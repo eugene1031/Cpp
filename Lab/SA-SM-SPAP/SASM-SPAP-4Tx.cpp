@@ -31,6 +31,7 @@
 #define  pi			    3.14159265359
 #define  bits_num       32//28
 #define  antenna_number 16//0~13
+double data_rate = bits_num / M;
 
 using namespace std;
 using namespace Eigen;
@@ -1151,7 +1152,7 @@ int main()
 	{
 		pnstate = 0xaaaaaaaaL;
 		snrdb = DB0 + point * DBSTEP;
-		snr = (3.75) * pow(10.0, 0.1 * snrdb); //(bitsnum / timenum)
+		snr = (data_rate) * pow(10.0, 0.1 * snrdb); //(bitsnum / timenum)
 		deviate = sqrt(0.5 / snr);
 		biterrno = 0;
 		errlevel = ERRNOSTEP;
