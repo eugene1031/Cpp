@@ -18,16 +18,16 @@
 #define  OPENSTRING  "#Eb/No(dB) BitErrRate         BitErrSample  TotalSample \n" 
 #define  DATASTRING  "%5.2f      %18.16f %7d %11u 1207\n",\
                      (snrdb),(double)biterrno/dsignal,biterrno,dsignal,deviate
-#define  DB0		-4.0
+#define  DB0		2.0
 #define  DBSTEP		2.0
 #define  POINTNO	20
 #define  ERRNOSTEP  2
 #define  MAXERRNO	1500//2000//1000//500
-#define  SAMPLE_NUM 10000//5000000//500000//200000//100000
+#define  SAMPLE_NUM 100000//5000000//500000//200000//100000
 #define  NORMALIZE  0.70710678118654752440084436210485
 
 #define  M              4
-#define  N              2
+#define  N              4
 #define  frame_w        20//35
 #define  sqrt2          0.70710678118654752440084436210485
 #define  pi			    3.14159265359
@@ -666,7 +666,7 @@ void receive()//void frame_length()
 			0, 0, 1, 0,
 			0, 0, 0, 1;
 		/////////////傳送式子/////////////
-		y = H * st2 + White_noise(N, 8);
+		y = H * st2;// +White_noise(N, 8);
 
 		//cout << "m:" << endl << m << endl;
 		//cout << "sp:" << endl << sp << endl;
@@ -1156,12 +1156,12 @@ int main()
 			for (samp = 0; samp < SAMPLE_NUM; samp++) {
 				receive();
 
-				//printf("%5.2f   %18.16f   %7d   %11u \n", (snrdb), (double)biterrno / dsignal, biterrno, dsignal, deviate);
+				printf("%5.2f   %18.16f   %7d   %11u \n", (snrdb), (double)biterrno / dsignal, biterrno, dsignal, deviate);
 			}
 		}
 		//cout << "跳出while迴圈 biterno比maxerrno多了 已找到足夠多的錯誤(maxerrno) " << endl;
 		//record();
-		printf("%5.2f   %18.16f   %7d   %11u \n", (snrdb), (double)biterrno / dsignal, biterrno, dsignal, deviate);
+		//printf("%5.2f   %18.16f   %7d   %11u \n", (snrdb), (double)biterrno / dsignal, biterrno, dsignal, deviate);
 	}
 	system("pause");
 	return 0;

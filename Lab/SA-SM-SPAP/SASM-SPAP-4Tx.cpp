@@ -12,16 +12,16 @@
 #include <Eigen/Eigenvalues>
 #include <Eigen/SVD>
 
-#define  OUTPUTFILE  "SASM-SPAP-4Tx.txt"
+#define  OUTPUTFILE  "SASM-SPAP4Tx.txt"
 #define  OPENSTRING  "#Eb/No(dB) BitErrRate         BitErrSample  TotalSample \n" 
 #define  DATASTRING  "%5.2f      %18.16f %7d %11u 1207\n",\
                      (snrdb),(double)biterrno/dsignal,biterrno,dsignal,deviate
-#define  DB0		-8.0
+#define  DB0		2.0
 #define  DBSTEP		2.0
 #define  POINTNO	20
 #define  ERRNOSTEP  2
 #define  MAXERRNO	1500//2000//1000//500
-#define  SAMPLE_NUM 10000//5000000//500000//200000//100000
+#define  SAMPLE_NUM 100000//5000000//500000//200000//100000
 #define  NORMALIZE  0.70710678118654752440084436210485
 
 #define  M              4
@@ -29,8 +29,8 @@
 #define  frame_w        20//35
 #define  sqrt2          0.70710678118654752440084436210485
 #define  pi			    3.14159265359
-#define  bits_num       37//28
-#define  antenna_number 21//0~13
+#define  bits_num       32//28
+#define  antenna_number 16//0~13
 
 using namespace std;
 using namespace Eigen;
@@ -103,16 +103,6 @@ void record()
 	fclose(fp);
 }
 
-
-
-//int interleaved_pattern[105][8];
-//int interleaved_pattern2[15][8];
-
-//int antenna_perm2[106][4];
-
-//===================================================================================
-
-//==========================================================================
 //G5有24種天線排列
 
 int antenna_perm[24][4] = { 1,2,3,4,	1,2,4,3,	1,3,2,4,	1,3,4,2,	1,4,2,3,	1,4,3,2,
@@ -190,6 +180,14 @@ int new_antenna_perm2[144][4] = { 1,1,2,3, 1,1,3,2, 1,2,1,3, 1,3,1,2, 1,2,3,1, 1
 									1,4,4,2, 2,4,4,1,
 									1,4,4,3, 3,4,4,1,
 									2,4,4,3, 3,4,4,2                                                  //24個  index 120~143  if m>=120
+};
+
+int row_interleaved_pattern[6][4] = { 1,2,3,4,     //  1324 是不合法的
+									1,3,4,2,
+									1,4,2,3,
+									2,1,4,3,
+	                                2,4,3,1,
+	                                2,3,1,4
 };
 
 int interleaved_pattern2[15][6] = { 1,2,3,4,5,6,  1,2,3,6,4,5,  1,2,3,5,6,4,
@@ -398,7 +396,7 @@ void change4(int a, int b, int c, int d, int e, int f, int g, int h, int th)
 }
 //==========================================================================================================================
 
-MatrixXcd H(N, 4), H_test(N, 2), noise(N, 8), Y_me(N, 8), ABC(N, 4);
+MatrixXcd H(N, 4), H_new(N, 4), H_test(N, 2), noise(N, 8), Y_me(N, 8), ABC(4, 4), I_row(4, 4);
 MatrixXcd  Y1(N, 2), Y2(N, 2), Y3(N, 2), Y4(N, 2), y(N, 8), NY(N, 8);
 MatrixXcd  Y_1(N, 2), Y_2(N, 2), Y_3(N, 2), Y_4(N, 2);
 MatrixXcd temp(N, 6), save(N, 6), Y1_temp(N, 2), Y2_temp(N, 2), Y3_temp(N, 2), Y4_temp(N, 2);
@@ -458,9 +456,9 @@ void receive()//void frame_length()
 
 	complex<double> qpsk_map[4] = { complex<double>(1,0),complex<double>(0,1),complex<double>(0,-1),complex<double>(-1,0) }, Q[frame_w][M * 2];
 
-	MatrixXcd zero(2, 2), /*Y1(N, 2), Y2(N, 2),*/ I_s1s2(2, 2), I_s3s4(2, 2), I_s5s6(2, 2), I_s7s8(2, 2), Ia(4, 2), Ib(4, 2), Ic(4, 2), Id(4, 2), Ya(4, 2), Yb(4, 2), Yc(4, 2), Yd(4, 2), I_me(4, 8), Y_me(4, 8), X_me(4, 8), X_me1(4, 2), X_me2(4, 2), X_me3(4, 2), X_me4(4, 2), X_m1(4, 2), X_m2(4, 2), X_m3(4, 2), X_m4(4, 2), I_diag(M, M), I_diag2(M, M), St1(M, M), /*y(N, M),*/ de_STBC(2, 2);
+	MatrixXcd zero(2, 2), /*Y1(N, 2), Y2(N, 2),*/ I_s1s2(2, 2), I_s3s4(2, 2), I_s5s6(2, 2), I_s7s8(2, 2), Ia(4, 2), Ib(4, 2), Ic(4, 2), Id(4, 2), Ya(4, 2), Yb(4, 2), Yc(4, 2), Yd(4, 2), I_me(4, 8), I_me_new(4, 8), Y_me(4, 8), X_me(4, 8), X_me1(4, 2), X_me2(4, 2), X_me3(4, 2), X_me4(4, 2), X_m1(4, 2), X_m2(4, 2), X_m3(4, 2), X_m4(4, 2), I_diag(M, M), I_diag2(M, M), St1(M, M), /*y(N, M),*/ de_STBC(2, 2);
 
-	MatrixXcd st2(4, 8), st4(4, 8), temp(2 * M, 6), save(2 * M, 6), diff(4, 8);
+	MatrixXcd st2(4, 8), temp(2 * M, 6), save(2 * M, 6), diff(4, 8);
 
 	zero << 0, 0,
 		0, 0;
@@ -471,7 +469,11 @@ void receive()//void frame_length()
 
 	for (int i = 0; i < frame_w; i++)
 	{
-		for (int j = 0; j < bits_num; j++)
+		for (int j = 0; j < antenna_number; j++)
+		{
+			input_bits[i][j] = rand() % 2;
+		}
+		for (int j = antenna_number; j < bits_num; j++)
 		{
 			input_bits[i][j] = rand() % 2;
 		}
@@ -515,21 +517,25 @@ void receive()//void frame_length()
 
 		min = 999999;
 
-		int m = 0;
-        for (int j = 0; j < antenna_number; j++)
-        {
-            m += (input_bits[i][j] << j);
-        }
+		m = (input_bits[i][0]) + ((input_bits[i][1]) << 1)
+			+ ((input_bits[i][2]) << 2) + ((input_bits[i][3]) << 3)
+			+ ((input_bits[i][4]) << 4) + ((input_bits[i][5]) << 5)
+			+ ((input_bits[i][6]) << 6) + ((input_bits[i][7]) << 7)
+			+ ((input_bits[i][8]) << 8) + ((input_bits[i][9]) << 9)
+			+ ((input_bits[i][10]) << 10) + ((input_bits[i][11]) << 11)
+			+ ((input_bits[i][12]) << 12) + ((input_bits[i][13]) << 13)
+			+ ((input_bits[i][14]) << 14) + ((input_bits[i][15]) << 15);
 
 		sp = m / 24; //交錯
-		ant = m % 24;//天線排列
-        int col = sp % 840;
-        int row = sp / 840;
-        Ia << Q[i][0], Q[i][1],
-            -conj(Q[i][1]), conj(Q[i][0]),
-            0, 0,
-            0, 0;
-        Ia = 1 / sqrt(2.0) * Ia;
+		int col = m / 24 % 840;	//840種col
+		int row = m / 24 / 840;	//6種row
+
+		ant = m % 24; // 天線排列
+		Ia << Q[i][0], Q[i][1],
+			-conj(Q[i][1]), conj(Q[i][0]),
+			0, 0,
+			0, 0;
+		Ia = 1 / sqrt(2.0) * Ia;
 		Ib <<
 			Q[i][2], 0,
 			0, conj(Q[i][2]),
@@ -646,26 +652,27 @@ void receive()//void frame_length()
 		}
 
 		//new define
-		st2.col(0) << I_me.col(sp840[col][0] - 1);
-		st2.col(1) << I_me.col(sp840[col][1] - 1);
-		st2.col(2) << I_me.col(sp840[col][2] - 1);
-		st2.col(3) << I_me.col(sp840[col][3] - 1);
-		st2.col(4) << I_me.col(sp840[col][4] - 1);
-		st2.col(5) << I_me.col(sp840[col][5] - 1);
-		st2.col(6) << I_me.col(sp840[col][6] - 1);
-		st2.col(7) << I_me.col(sp840[col][7] - 1);
-        for (int kk = 0; kk < 8; kk++) {
-				st4.row(kk) << st2.row(sp105[row][kk] - 1);
-			}
+		I_me_new.col(0) << I_me.col(sp840[col][0] - 1);
+		I_me_new.col(1) << I_me.col(sp840[col][1] - 1);
+		I_me_new.col(2) << I_me.col(sp840[col][2] - 1);
+		I_me_new.col(3) << I_me.col(sp840[col][3] - 1);
+		I_me_new.col(4) << I_me.col(sp840[col][4] - 1);
+		I_me_new.col(5) << I_me.col(sp840[col][5] - 1);
+		I_me_new.col(6) << I_me.col(sp840[col][6] - 1);
+		I_me_new.col(7) << I_me.col(sp840[col][7] - 1);
+
+		for (int kk = 0; kk < 4; kk++) {
+			st2.row(kk) << I_me_new.row(row_interleaved_pattern[row][kk] - 1);
+		}
+
 		ABC << 1, 0, 0, 0,
 			0, 1, 0, 0,
 			0, 0, 1, 0,
 			0, 0, 0, 1;
 		/////////////傳送式子/////////////
-        y = H * st2;
-     //   +White_noise(N, 8);
+		y = H * st2;// +White_noise(N, 8);
 
-        //cout << "m:" << endl << m << endl;
+		//cout << "m:" << endl << m << endl;
 		//cout << "sp:" << endl << sp << endl;
 		//cout << "ant:" << endl << ant << endl;
 		//cout << "I_me:" << endl << I_me << endl;
@@ -722,16 +729,15 @@ void receive()//void frame_length()
 		}
 
 		//接收端 解接收到的訊號回傳送訊號
-		for (int mr = 0; mr < 2097152; mr++) //0~16383 共16384種
+		for (int mr = 0; mr < 65536; mr++) //0~16383 共16384種
 		{
 			temp_min1 = 999999;
 			temp_min2 = 999999;
 			temp_min3 = 999999;
 			temp_min4 = 999999;
 
-			interleaved = mr / 24;
-            int de_col = interleaved % 840;
-            int de_row = interleaved / 840;
+			int de_col = mr / 24 % 840;
+			int de_row = mr / 24 / 840;
 			reference_order = mr % 24;
 			Y1Y2Y3Y4(de_col, 0);
 
@@ -993,15 +999,15 @@ void receive()//void frame_length()
 					X_me3.col(1) << Y_me.col(5);
 					X_me4.col(0) << Y_me.col(6);
 					X_me4.col(1) << Y_me.col(7);
-                    
-                    for (int i = 0; i < M; i++){
-                        I_row.row(i) << I_identity.row(sp105[*de_row][i] - 1);
-                    }
 
-					norm_output1 = (Y_1 - H * X_me1).squaredNorm();
-					norm_output2 = (Y_2 - H * X_me2).squaredNorm();
-					norm_output3 = (Y_3 - H * X_me3).squaredNorm();
-					norm_output4 = (Y_4 - H * X_me4).squaredNorm();
+					for (int kk = 0; kk < 4; kk++) {
+						I_row.row(kk) << ABC.row(row_interleaved_pattern[de_row][kk] - 1);
+					}
+					H_new = H * I_row;
+					norm_output1 = (Y_1 - H_new * X_me1).squaredNorm();
+					norm_output2 = (Y_2 - H_new * X_me2).squaredNorm();
+					norm_output3 = (Y_3 - H_new * X_me3).squaredNorm();
+					norm_output4 = (Y_4 - H_new * X_me4).squaredNorm();
 
 
 
@@ -1087,12 +1093,14 @@ void receive()//void frame_length()
 		decode_bits[i][11] = ((m_save[i] >> 11) % 2);
 		decode_bits[i][12] = ((m_save[i] >> 12) % 2);
 		decode_bits[i][13] = ((m_save[i] >> 13) % 2);
+		decode_bits[i][14] = ((m_save[i] >> 14) % 2);
+		decode_bits[i][15] = ((m_save[i] >> 15) % 2);
 
 
 		//解後面的QPSK
 		for (int k = 0; k < 8; k++) {
-			decode_bits[i][k * 2 + 14] = (ab_save[i][k] >> 1) % 2; //14是天線位元
-			decode_bits[i][k * 2 + 15] = (ab_save[i][k]) % 2;		//15是天線位元+1
+			decode_bits[i][k * 2 + 16] = (ab_save[i][k] >> 1) % 2;  //16是天線位元
+			decode_bits[i][k * 2 + 17] = (ab_save[i][k]) % 2;		//17是天線位元+1
 		}
 
 	}
@@ -1159,12 +1167,12 @@ int main()
 			for (samp = 0; samp < SAMPLE_NUM; samp++) {
 				receive();
 
-				//printf("%5.2f   %18.16f   %7d   %11u \n", (snrdb), (double)biterrno / dsignal, biterrno, dsignal, deviate);
+				printf("%5.2f   %18.16f   %7d   %11u \n", (snrdb), (double)biterrno / dsignal, biterrno, dsignal, deviate);
 			}
 		}
 		//cout << "跳出while迴圈 biterno比maxerrno多了 已找到足夠多的錯誤(maxerrno) " << endl;
 		//record();
-		printf("%5.2f   %18.16f   %7d   %11u \n", (snrdb), (double)biterrno / dsignal, biterrno, dsignal, deviate);
+		//printf("%5.2f   %18.16f   %7d   %11u \n", (snrdb), (double)biterrno / dsignal, biterrno, dsignal, deviate);
 	}
 	system("pause");
 	return 0;
