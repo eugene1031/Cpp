@@ -29,8 +29,8 @@
 #define  frame_w        20//35
 #define  sqrt2          0.70710678118654752440084436210485
 #define  pi			    3.14159265359
-#define  bits_num       32//28
-#define  antenna_number 16//0~13
+#define  bits_num       31//28
+#define  antenna_number 15//0~13
 double data_rate = bits_num / M;
 
 using namespace std;
@@ -525,7 +525,7 @@ void receive()//void frame_length()
 			+ ((input_bits[i][8]) << 8) + ((input_bits[i][9]) << 9)
 			+ ((input_bits[i][10]) << 10) + ((input_bits[i][11]) << 11)
 			+ ((input_bits[i][12]) << 12) + ((input_bits[i][13]) << 13)
-			+ ((input_bits[i][14]) << 14) + ((input_bits[i][15]) << 15);
+			+ ((input_bits[i][14]) << 14);
 
 		sp = m / 24; //交錯
 		int col = m / 24 % 840;	//840種col
@@ -730,7 +730,7 @@ void receive()//void frame_length()
 		}
 
 		//接收端 解接收到的訊號回傳送訊號
-		for (int mr = 0; mr < 65536; mr++) //0~16383 共16384種
+		for (int mr = 0; mr < 32768; mr++) //0~16383 共16384種
 		{
 			temp_min1 = 999999;
 			temp_min2 = 999999;
@@ -1095,13 +1095,13 @@ void receive()//void frame_length()
 		decode_bits[i][12] = ((m_save[i] >> 12) % 2);
 		decode_bits[i][13] = ((m_save[i] >> 13) % 2);
 		decode_bits[i][14] = ((m_save[i] >> 14) % 2);
-		decode_bits[i][15] = ((m_save[i] >> 15) % 2);
+		//decode_bits[i][15] = ((m_save[i] >> 15) % 2);
 
 
 		//解後面的QPSK
 		for (int k = 0; k < 8; k++) {
-			decode_bits[i][k * 2 + 16] = (ab_save[i][k] >> 1) % 2;  //16是天線位元
-			decode_bits[i][k * 2 + 17] = (ab_save[i][k]) % 2;		//17是天線位元+1
+			decode_bits[i][k * 2 + 15] = (ab_save[i][k] >> 1) % 2;  //16是天線位元
+			decode_bits[i][k * 2 + 16] = (ab_save[i][k]) % 2;		//17是天線位元+1
 		}
 
 	}
