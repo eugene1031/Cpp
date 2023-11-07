@@ -1152,7 +1152,7 @@ int main()
 	{
 		pnstate = 0xaaaaaaaaL;
 		snrdb = DB0 + point * DBSTEP;
-		snr = (data_rate) * pow(10.0, 0.1 * snrdb); //(bitsnum / timenum)
+		snr = (31 / 8) * pow(10.0, 0.1 * snrdb); //(bitsnum / timenum)
 		deviate = sqrt(0.5 / snr);
 		biterrno = 0;
 		errlevel = ERRNOSTEP;
