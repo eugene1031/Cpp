@@ -12,8 +12,8 @@
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
 
-#define  OUTPUTFILE  "SA-SM4Tx.txt"
-#define  OUTPUTFILED "SA-SM4Txdebug.txt"
+#define  OUTPUTFILE  "SA-SM-4Tx.txt"
+#define  OUTPUTFILED "SA-SM4Tx-debug.txt"
 
 #define  OPENSTRING  "#Eb/No(dB) BitErrRate         BitErrSample  TotalSample \n" 
 #define  DATASTRING  "%5.2f      %18.16f %7d %11u \n",\
@@ -160,7 +160,7 @@ void TxRx()
 	MatrixXcd Xt1(M, M);
 
 	int two = 0, four = 0;
-	for (int a = 0; a < codeword; a++) { // a < codeword - 1
+	for (int a = 0; a < 1; a++) { // a < codeword - 1
 
 		for (int b = 0; b < codeword; b++) {
 			cout << " a = " << a << " b = " << b << endl;
@@ -265,16 +265,20 @@ void TxRx()
 					{
 						fprintf(fpDebug, "%d    %.5f%10.5f%10.5f%10.5f  (%d,%d)\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), a, b);
 			}
-			if(a < b){// && s[0][0] == s[1][0] && s[0][1] == s[1][1]){
-				// ofstream excel;
-				// excel.open("SA-SM-Bound.csv");
-				//if((((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3)) < 12){
+			if (find3And4Zero(a, b, ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3)) == 2)
+					{
 				fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10.5f\n", hammingDistance(a, b), abs(((Dij_matrix.eigenvalues()).real())(0)), abs(((Dij_matrix.eigenvalues()).real())(1)), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), (((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3)));//, a, b);
-				//}
-				// if(excel.is_open())
-				// {excel << ((Dij_matrix.eigenvalues()).real())(2) << ',' << ((Dij_matrix.eigenvalues()).real())(3)<< ',' << (((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3))<< ',' << a<< ',' << b<< ',';
-				// excel << endl;
-				}
+			}
+			// if(a < b){// && s[0][0] == s[1][0] && s[0][1] == s[1][1]){
+			// 	// ofstream excel;
+			// 	// excel.open("SA-SM-Bound.csv");
+			// 	//if((((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3)) < 12){
+			// 	fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10.5f\n", hammingDistance(a, b), abs(((Dij_matrix.eigenvalues()).real())(0)), abs(((Dij_matrix.eigenvalues()).real())(1)), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), (((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3)));//, a, b);
+			// 	//}
+			// 	// if(excel.is_open())
+			// 	// {excel << ((Dij_matrix.eigenvalues()).real())(2) << ',' << ((Dij_matrix.eigenvalues()).real())(3)<< ',' << (((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3))<< ',' << a<< ',' << b<< ',';
+			// 	// excel << endl;
+			// 	}
 			}
 			/*
 			if (((Dij_matrix.eigenvalues()).real())(0) == 0 && ((Dij_matrix.eigenvalues()).real())(1) == 0) {
