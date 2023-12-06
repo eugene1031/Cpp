@@ -154,7 +154,32 @@ void TxRx()
 	zero_ele << 0, 0,
 		0, 0;
 
+    	// 假设矩阵存储在名为 matrices 的数据结构中
 
+vector<MatrixXcd> allCombinations; // 存储所有组合的容器
+vector<MatrixXcd> matrices;
+int combinationsCount = 0;
+// 循环遍历矩阵生成组合
+for (int i = 0; i < matrices.size(); ++i) {
+        for (int j = i + 1; j < matrices.size(); ++j) {
+            for (int k = j + 1; k < matrices.size(); ++k) {
+                for (int l = k + 1; l < matrices.size(); ++l) {
+                    MatrixXcd combinedMatrix(8, 8);
+                    combinedMatrix << matrices[i], matrices[j],
+                                      matrices[k], matrices[l];
+                    allCombinations.push_back(combinedMatrix);
+                    combinationsCount++;
+                    cout << i << " , " << j << " , " << k << " , " << l << " , " << endl;
+                    if (combinationsCount >= 1024)
+                    {
+                        break; // 达到1024组合，停止生成更多组合
+                    }
+            }
+        }
+    }
+}
+
+// 现在 allCombinations 中包含了前1024种组合的8x8矩阵
 
 
 	//------------------------------------------------------------------輸入bit
@@ -587,7 +612,43 @@ void TxRx()
 }
 int main()
 {
+    vector<MatrixXcd> allCombinations; // 存储所有组合的容器
+vector<MatrixXcd> matrices;
+int combinationsCount = 0;
 
+// 循环遍历矩阵生成组合
+for (int i = 0; i < 16; ++i) {
+        for (int j = i + 1; j < 16; ++j) {
+            for (int k = j + 1; k < 16; ++k) {
+                for (int l = k + 1; l < 16; ++l) {
+                    //MatrixXcd combinedMatrix(8, 8);
+                    //combinedMatrix << matrices[i], matrices[j],
+                    //                  matrices[k], matrices[l];
+                    //allCombinations.push_back(combinedMatrix);
+                    combinationsCount++;
+                    cout << i << " , " << j << " , " << k << " , " << l << " , " << endl;
+                    cout << "count: " << combinationsCount << endl;
+                     if (combinationsCount == 1024)
+                    {
+                        break; // 达到1024组合，停止生成更多组合
+                    }
+            }
+            if (combinationsCount == 1024)
+                    {
+                        break; // 达到1024组合，停止生成更多组合
+                    }
+        }
+        if (combinationsCount == 1024)
+                    {
+                        break; // 达到1024组合，停止生成更多组合
+                    }
+    }
+    if (combinationsCount == 1024)
+                    {
+                        break; // 达到1024组合，停止生成更多组合
+                    }
+}
+getchar();
 	//srand((unsigned)time(NULL));
 	//initial();
 	for (point = 0; point < POINTNO; point++)
