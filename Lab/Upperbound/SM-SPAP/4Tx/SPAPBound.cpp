@@ -258,7 +258,7 @@ void TxRx()
 
 	//coding gain 從這邊開始看 我傳了13 data bits 代表　martix 會有 2的13次方種選擇
 	int two = 0, four = 0;
-	for (int a = 0; a < 1; a++) { // a < codeword - 1
+	for (int a = 0; a < codeword; a++) { // a < codeword - 1
 		
 		for (int b = 1; b < codeword; b++) {
 			cout << " a = " << a << " b = " << b << endl;
@@ -266,7 +266,7 @@ void TxRx()
 			//cout << "hamming Distance = " << hammingDistance(a, b) << endl;
 
 			//十進制轉二進制 (a/128)%2轉二，再乘2 轉十 +   
-				if (b != a) {
+				if (b > a) {
 			//10進制轉2進制，再兩個一組轉10進制
 			s[0][0] = qpsk_map[((a / 128) % 2) * 2 + ((a / 64) % 2)];
 			s[0][1] = qpsk_map[((a / 32) % 2) * 2 + ((a / 16) % 2)];
@@ -349,17 +349,17 @@ void TxRx()
 			*/
 
 			//Debug find zero numbers bigger than 3
-			if (find3And4Zero(a, b, ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3)) > 2) 
-			{
+			//if (find3And4Zero(a, b, ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3)) > 2) 
+			//{
 				fprintf(fpDebug, "%d    %.5f%10.5f%10.5f%10.5f  (%d,%d)\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), a, b);
-			}
+			//}
 			
 			
 
-			if (find3And4Zero(a, b, ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3)) == 2)
-            {
-			fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), abs(((Dij_matrix.eigenvalues()).real())(0)), abs(((Dij_matrix.eigenvalues()).real())(1)), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), (((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3)), a, b);
-            }
+			// if (find3And4Zero(a, b, ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3)) == 2)
+            // {
+			// fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), abs(((Dij_matrix.eigenvalues()).real())(0)), abs(((Dij_matrix.eigenvalues()).real())(1)), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), (((Dij_matrix.eigenvalues()).real())(2) * ((Dij_matrix.eigenvalues()).real())(3)), a, b);
+            // }
 			//fprintf(fp, "%d    %.5f%10.5f%10.5f%10.5f%10d%10d\n", hammingDistance(a, b), ((Dij_matrix.eigenvalues()).real())(0), ((Dij_matrix.eigenvalues()).real())(1), ((Dij_matrix.eigenvalues()).real())(2), ((Dij_matrix.eigenvalues()).real())(3), a, b);
 
 
